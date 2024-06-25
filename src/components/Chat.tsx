@@ -54,7 +54,7 @@ const Chat: React.FC = () => {
 
     return (
         <div style={{ padding: '20px', margin: 'auto', height: '80vh', display: 'flex', flexDirection: 'column' }}>
-            <h2>Chat</h2>
+            <h2 style={{color:"#000", marginBottom: '20px'}}>Chat</h2>
             <div style={{ flex: 1, maxHeight: 'calc(80vh - 100px)', overflowY: 'scroll', border: '1px solid #ccc', padding: '10px', marginBottom: '10px', background: '#fff' }}>
                 {messages.map((message) => (
                     <div key={message.id} style={{ marginBottom: '10px', textAlign: message.sender === 'Usuario' ? 'right' : 'left' }}>
@@ -72,10 +72,10 @@ const Chat: React.FC = () => {
                     value={newMessageText}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
-                    style={{ flex: 1, marginRight: '10px', borderRadius: '20px', padding: '12px', border: '1px solid #ccc', fontSize: '16px' }}
+                    style={{ flex: 1, marginRight: '10px', borderRadius: '20px', padding: '12px', border: '1px solid #ccc', fontSize: '16px', background: "#fff", color: "#000" }}
                     placeholder="Type your message..."
                 />
-                <button onClick={sendMessage} style={{ height: '40px', borderRadius: '20px', fontSize: '16px' }}>Send</button>
+                <button onClick={sendMessage} style={{ height: '40px', borderRadius: '20px', fontSize: '16px', background: "#646cff", alignItems: "center", justifyContent: "center", display: "flex" }}>Send</button>
             </div>
         </div>
     );

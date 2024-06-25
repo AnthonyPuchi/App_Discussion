@@ -1,16 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Avatar, List } from 'antd';
+import { fetchTopics } from '../service/Service'; // Ajusta la ruta según la estructura de tu proyecto
 
-const data = [
-    { id: '1', title: 'Topic Title 1' },
-    { id: '2', title: 'Topic Title 2' },
-    { id: '3', title: 'Topic Title 3' },
-    { id: '4', title: 'Topic Title 4' },
-];
+interface Topic {
+    id: string;
+    title: string;
+    roomId: string;
+}
 
 const Topic: React.FC = () => {
     const { roomTitle } = useParams<{ roomTitle: string }>();
+    const [topics, setTopics] = useState<Topic[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const topicsData = await fetchTopics();
+                setTopics(topicsData);
+            } catch (error) {
+                console.error('Error fetching topics:', error);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const handleItemClick = (topicId: string) => {
         // Aquí puedes realizar alguna acción antes de redirigir, si es necesario
@@ -19,10 +33,10 @@ const Topic: React.FC = () => {
 
     return (
         <div style={{ padding: '20px' }}>
-            <h2 style={{ marginBottom: '20px' }}>Bienvenido a {decodeURIComponent(roomTitle as string)}</h2>
+            <h2 style={{ marginBottom: '20px', color:"#000" }}>Bienvenido a {decodeURIComponent(roomTitle as string)}</h2>
             <List
                 itemLayout="horizontal"
-                dataSource={data}
+                dataSource={topics}
                 renderItem={(item) => (
                     <List.Item key={item.id}>
                         <List.Item.Meta

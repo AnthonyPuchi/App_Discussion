@@ -5,7 +5,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -80,9 +80,9 @@ button:focus-visible {
 }
 
 .ant-avatar {
-  background-color: #1a1a1a;
+  background-color: #ffffff;
 }
 
 .ant-list-item:hover {
-  background-color: #1a1a1a;
+  background-color: #9c9c9c;
 }
