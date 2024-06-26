@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Avatar, List } from 'antd';
-import { fetchTopics } from '../service/Service'; // Ajusta la ruta según la estructura de tu proyecto
+import { fetchTopics } from '../service/Service';
 
 interface Topic {
     id: string;
@@ -27,7 +27,6 @@ const Topic: React.FC = () => {
     }, []);
 
     const handleItemClick = (topicId: string) => {
-        // Aquí puedes realizar alguna acción antes de redirigir, si es necesario
         console.log(`Clic en el tema con ID ${topicId}`);
     };
 
