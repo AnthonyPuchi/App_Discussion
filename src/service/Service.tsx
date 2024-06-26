@@ -13,6 +13,12 @@ interface Topic {
     roomId: string;
 }
 
+interface User {
+    id: string;
+    firstName: string;
+    lastName: string;
+}
+
 const API_URL = 'http://localhost:8000';
 
 export const fetchRooms = async (): Promise<Room[]> => {
@@ -33,4 +39,28 @@ export const fetchTopics = async (): Promise<Topic[]> => {
         console.error('Error fetching topics:', error);
         throw error;
     }
+};
+
+export const fetchUsers = async (): Promise<User[]> => {
+    try {
+        const response = await axios.get<User[]>(`${API_URL}/users`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        throw error;
+    }
+};
+
+export const getUserParticipationCount = (username: string): number => {
+    const userMessagesCount = JSON.parse(localStorage.getItem('userMessagesCount') || '{}');
+    return userMessagesCount[username] || 0;
+};
+
+export const updateUserParticipationCount = (username: string): void => {
+    const userMessagesCount = JSON.parse(localStorage.getItem('userMessagesCount') || '{}');
+    const count = userMessagesCount[username] || 0;
+    localStorage.setItem('userMessagesCount', JSON.stringify({
+        ...userMessagesCount,
+        [username]: count + 1,
+    }));
 };

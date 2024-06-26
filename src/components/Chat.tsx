@@ -1,4 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useNavigate } from 'react-router-dom';
+import { updateUserParticipationCount, getUserParticipationCount } from '../service/Service';
 
 interface Message {
     id: number;
@@ -7,15 +10,20 @@ interface Message {
 }
 
 const Chat: React.FC = () => {
-    const [messages, setMessages] = useState<Message[]>([
-        { id: 1, text: 'Hola! ¿Cómo estás?', sender: 'Usuario' },
-        { id: 2, text: '¡Hola! Bien, gracias.', sender: 'Otro Usuario' },
-        { id: 3, text: '¿Qué tal tu día?', sender: 'Usuario' },
-    ]);
-
+    const { user } = useAuth0();
+    const navigate = useNavigate();
+    const [messages, setMessages] = useState<Message[]>(() => {
+        const savedMessages = localStorage.getItem('messages');
+        return savedMessages ? JSON.parse(savedMessages) : [];
+    });
     const [newMessageText, setNewMessageText] = useState<string>('');
-
+    const [participationCount, setParticipationCount] = useState<number>(0);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const count = getUserParticipationCount(user?.name || 'Usuario');
+        setParticipationCount(count);
+    }, [user]);
 
     const scrollToBottom = () => {
         if (messagesEndRef.current) {
@@ -25,6 +33,7 @@ const Chat: React.FC = () => {
 
     useEffect(() => {
         scrollToBottom();
+        localStorage.setItem('messages', JSON.stringify(messages));
     }, [messages]);
 
     const sendMessage = () => {
@@ -35,11 +44,13 @@ const Chat: React.FC = () => {
         const newMessage: Message = {
             id: messages.length + 1,
             text: newMessageText,
-            sender: 'Usuario',
+            sender: user?.name || 'Usuario',
         };
 
         setMessages([...messages, newMessage]);
         setNewMessageText('');
+        updateUserParticipationCount(user?.name || 'Usuario');
+        setParticipationCount((prevCount) => prevCount + 1);
     };
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,19 +63,27 @@ const Chat: React.FC = () => {
         }
     };
 
+    const handleParticipantsClick = () => {
+        navigate('/participants');
+    };
+
     return (
         <div style={{ padding: '20px', margin: 'auto', height: '80vh', display: 'flex', flexDirection: 'column' }}>
-            <h2 style={{color:"#000", marginBottom: '20px'}}>Chat</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 style={{ color: "#000" }}>Chat</h2>
+                <button onClick={handleParticipantsClick} style={{ padding: '10px 20px', borderRadius: '10px', backgroundColor: '#646cff', color: '#fff', border: 'none' }}>Participants</button>
+            </div>
+            <p style={{color: "#000"}}>Participaciones: {participationCount}</p>
             <div style={{ flex: 1, maxHeight: 'calc(80vh - 100px)', overflowY: 'scroll', border: '1px solid #ccc', padding: '10px', marginBottom: '10px', background: '#fff' }}>
                 {messages.map((message) => (
-                    <div key={message.id} style={{ marginBottom: '10px', textAlign: message.sender === 'Usuario' ? 'right' : 'left' }}>
+                    <div key={message.id} style={{ marginBottom: '10px', textAlign: message.sender === user?.name ? 'right' : 'left' }}>
                         <div style={{ marginBottom: '5px', color: '#000' }}>{message.sender}</div>
                         <div style={{ backgroundColor: message.sender === 'Usuario' ? '#f0f0f0' : '#e6e6e6', color: '#000', padding: '8px 12px', borderRadius: '8px', maxWidth: '70%', wordWrap: 'break-word', display: 'inline-block', marginLeft: message.sender === 'Usuario' ? 'auto' : '0', marginRight: message.sender === 'Usuario' ? '0' : 'auto' }}>
                             {message.text}
                         </div>
                     </div>
                 ))}
-                <div ref={messagesEndRef} />
+
             </div>
             <div style={{ display: 'flex', marginBottom: '10px' }}>
                 <input
