@@ -26,10 +26,6 @@ const Topic: React.FC = () => {
         fetchData();
     }, []);
 
-    const handleItemClick = (topicId: string) => {
-        console.log(`Clic en el tema con ID ${topicId}`);
-    };
-
     return (
         <div style={{ padding: '20px' }}>
             <h2 style={{ marginBottom: '20px', color:"#000" }}>Bienvenido a {decodeURIComponent(roomTitle as string)}</h2>
@@ -40,7 +36,7 @@ const Topic: React.FC = () => {
                     <List.Item key={item.id}>
                         <List.Item.Meta
                             avatar={<Avatar src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${item.id}`} />}
-                            title={<Link to={`/chat/${item.id}`} onClick={() => handleItemClick(item.id)}>{item.title}</Link>}
+                            title={<Link to={`/chat/${item.id}`}>{item.title}</Link>}
                             description="Descripción de las discusiones del tema"
                         />
                     </List.Item>

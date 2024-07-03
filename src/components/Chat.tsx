@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { useNavigate } from 'react-router-dom';
-import { updateUserParticipationCount, getUserParticipationCount } from '../service/Service';
+import { useNavigate, useParams } from 'react-router-dom';
+import { fetchUserTopicByUserIdAndTopicId, saveUserMessage, updateUserParticipationCount, getUserParticipationCount, fetchUserIdByEmail } from '../service/Service';
 
 interface Message {
     id: number;
@@ -11,6 +11,7 @@ interface Message {
 
 const Chat: React.FC = () => {
     const { user } = useAuth0();
+    const { topicId } = useParams<{ topicId: string }>();
     const navigate = useNavigate();
     const [messages, setMessages] = useState<Message[]>(() => {
         const savedMessages = localStorage.getItem('messages');
@@ -36,21 +37,49 @@ const Chat: React.FC = () => {
         localStorage.setItem('messages', JSON.stringify(messages));
     }, [messages]);
 
-    const sendMessage = () => {
+    const sendMessage = async () => {
         if (newMessageText.trim() === '') {
             return;
         }
 
-        const newMessage: Message = {
-            id: messages.length + 1,
-            text: newMessageText,
-            sender: user?.name || 'Usuario',
-        };
+        try {
+            const email = user?.email;
+            if (!email) {
+                console.error('User email is not available');
+                return;
+            }
 
-        setMessages([...messages, newMessage]);
-        setNewMessageText('');
-        updateUserParticipationCount(user?.name || 'Usuario');
-        setParticipationCount((prevCount) => prevCount + 1);
+            const userId = await fetchUserIdByEmail(email);
+            if (!userId) {
+                console.error('User ID not found for email:', email);
+                return;
+            }
+
+            console.log('userId:', userId);
+            console.log('topicId:', topicId);
+
+            const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
+            if (userTopic) {
+                console.log('Se encontró el UserTopic.');
+            } else {
+                console.log('No se encontró el UserTopic.');
+            }
+
+            const userTopicId = userTopic ? userTopic.id : null;
+            console.log('userTopicId:', userTopicId);
+
+            if (userTopicId) {
+                await saveUserMessage(userTopicId, newMessageText);
+                setMessages([...messages, { id: messages.length + 1, text: newMessageText, sender: user?.name || 'Usuario' }]);
+                setNewMessageText('');
+                updateUserParticipationCount(user?.name || 'Usuario');
+                setParticipationCount((prevCount) => prevCount + 1);
+            } else {
+                console.error('No UserTopic found for the current topic');
+            }
+        } catch (error) {
+            console.error('Error saving user message:', error);
+        }
     };
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +102,7 @@ const Chat: React.FC = () => {
                 <h2 style={{ color: "#000" }}>Chat</h2>
                 <button onClick={handleParticipantsClick} style={{ padding: '10px 20px', borderRadius: '10px', backgroundColor: '#646cff', color: '#fff', border: 'none' }}>Participants</button>
             </div>
-            <p style={{color: "#000"}}>Participaciones: {participationCount}</p>
+            <p style={{ color: "#000" }}>Participaciones: {participationCount}</p>
             <div style={{ flex: 1, maxHeight: 'calc(80vh - 100px)', overflowY: 'scroll', border: '1px solid #ccc', padding: '10px', marginBottom: '10px', background: '#fff' }}>
                 {messages.map((message) => (
                     <div key={message.id} style={{ marginBottom: '10px', textAlign: message.sender === user?.name ? 'right' : 'left' }}>
@@ -83,7 +112,6 @@ const Chat: React.FC = () => {
                         </div>
                     </div>
                 ))}
-
             </div>
             <div style={{ display: 'flex', marginBottom: '10px' }}>
                 <input
@@ -96,6 +124,7 @@ const Chat: React.FC = () => {
                 />
                 <button onClick={sendMessage} style={{ height: '40px', borderRadius: '20px', fontSize: '16px', background: "#646cff", alignItems: "center", justifyContent: "center", display: "flex" }}>Send</button>
             </div>
+            <div ref={messagesEndRef} />
         </div>
     );
 };

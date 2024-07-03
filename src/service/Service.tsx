@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, {AxiosError} from 'axios';
 
 interface Room {
     id: string;
@@ -51,6 +51,16 @@ export const fetchUsers = async (): Promise<User[]> => {
     }
 };
 
+export const fetchUserIdByEmail = async (email: string): Promise<string | null> => {
+    try {
+        const response = await axios.get<User>(`${API_URL}/users/email/${email}`);
+        return response.data?.id || null;
+    } catch (error) {
+        console.error('Error fetching user ID by email:', error);
+        throw error;
+    }
+};
+
 export const getUserParticipationCount = (username: string): number => {
     const userMessagesCount = JSON.parse(localStorage.getItem('userMessagesCount') || '{}');
     return userMessagesCount[username] || 0;
@@ -63,4 +73,37 @@ export const updateUserParticipationCount = (username: string): void => {
         ...userMessagesCount,
         [username]: count + 1,
     }));
+};
+
+export const saveUserMessage = async (userTopicId: string, message: string): Promise<void> => {
+    try {
+        await axios.post(`${API_URL}/user-participation`, {
+            userTopicId,
+            message,
+            status: true,
+        });
+    } catch (error) {
+        console.error('Error saving user message:', error);
+        throw error;
+    }
+};
+
+export const fetchUserTopicByUserIdAndTopicId = async (userId: string, topicId: string | undefined) => {
+    try {
+        const response = await axios.get(`${API_URL}/users-topics/user/${userId}/topic/${topicId}`);
+        return response.data;
+    } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError;
+            if (axiosError.response && axiosError.response.status === 404) {
+                console.error('UserTopic not found. Please check your IDs.');
+                throw new Error('UserTopic not found');
+            } else {
+                console.error('Error fetching user topic:', axiosError.message);
+            }
+        } else {
+            console.error('Unexpected error:', error);
+        }
+        throw error;
+    }
 };
