@@ -1,4 +1,4 @@
-import axios, {AxiosError} from 'axios';
+import axios, { AxiosError } from 'axios';
 
 interface Room {
     id: string;
@@ -104,6 +104,15 @@ export const fetchUserTopicByUserIdAndTopicId = async (userId: string, topicId: 
         } else {
             console.error('Unexpected error:', error);
         }
+        throw error;
+    }
+};
+
+export const incrementUserParticipationCount = async (userTopicId: string): Promise<void> => {
+    try {
+        await axios.post(`${API_URL}/users-topics/increment/${userTopicId}`);
+    } catch (error) {
+        console.error('Error incrementing user participation count:', error);
         throw error;
     }
 };

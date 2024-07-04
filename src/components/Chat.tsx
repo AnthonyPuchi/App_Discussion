@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchUserTopicByUserIdAndTopicId, saveUserMessage, updateUserParticipationCount, getUserParticipationCount, fetchUserIdByEmail } from '../service/Service';
+import { fetchUserTopicByUserIdAndTopicId, saveUserMessage, incrementUserParticipationCount, fetchUserIdByEmail } from '../service/Service';
 
 interface Message {
     id: number;
@@ -13,18 +13,44 @@ const Chat: React.FC = () => {
     const { user } = useAuth0();
     const { topicId } = useParams<{ topicId: string }>();
     const navigate = useNavigate();
-    const [messages, setMessages] = useState<Message[]>(() => {
-        const savedMessages = localStorage.getItem('messages');
-        return savedMessages ? JSON.parse(savedMessages) : [];
-    });
+    const [messages, setMessages] = useState<Message[]>([]);
     const [newMessageText, setNewMessageText] = useState<string>('');
     const [participationCount, setParticipationCount] = useState<number>(0);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const count = getUserParticipationCount(user?.name || 'Usuario');
-        setParticipationCount(count);
-    }, [user]);
+        const loadMessagesAndResetCount = async () => {
+            try {
+                const email = user?.email;
+                if (!email) {
+                    console.error('User email is not available');
+                    return;
+                }
+
+                const userId = await fetchUserIdByEmail(email);
+                if (!userId) {
+                    console.error('User ID not found for email:', email);
+                    return;
+                }
+
+                const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
+                if (userTopic) {
+                    console.log('Se encontró el UserTopic:', userTopic);
+                    const messagesForTopic = userTopic.messages || [];
+                    setMessages(messagesForTopic);
+                    setParticipationCount(0); // Reinicia el contador de participaciones
+                } else {
+                    console.log('No se encontró el UserTopic.');
+                    setMessages([]);
+                    setParticipationCount(0); // Asegura que el contador se reinicie incluso si no hay mensajes
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        };
+
+        loadMessagesAndResetCount();
+    }, [user, topicId]);
 
     const scrollToBottom = () => {
         if (messagesEndRef.current) {
@@ -34,7 +60,6 @@ const Chat: React.FC = () => {
 
     useEffect(() => {
         scrollToBottom();
-        localStorage.setItem('messages', JSON.stringify(messages));
     }, [messages]);
 
     const sendMessage = async () => {
@@ -60,19 +85,12 @@ const Chat: React.FC = () => {
 
             const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
             if (userTopic) {
-                console.log('Se encontró el UserTopic.');
-            } else {
-                console.log('No se encontró el UserTopic.');
-            }
-
-            const userTopicId = userTopic ? userTopic.id : null;
-            console.log('userTopicId:', userTopicId);
-
-            if (userTopicId) {
+                console.log('Se encontró el UserTopic:', userTopic);
+                const userTopicId = userTopic.id;
                 await saveUserMessage(userTopicId, newMessageText);
+                await incrementUserParticipationCount(userTopicId);
                 setMessages([...messages, { id: messages.length + 1, text: newMessageText, sender: user?.name || 'Usuario' }]);
                 setNewMessageText('');
-                updateUserParticipationCount(user?.name || 'Usuario');
                 setParticipationCount((prevCount) => prevCount + 1);
             } else {
                 console.error('No UserTopic found for the current topic');
@@ -112,6 +130,7 @@ const Chat: React.FC = () => {
                         </div>
                     </div>
                 ))}
+                <div ref={messagesEndRef} />
             </div>
             <div style={{ display: 'flex', marginBottom: '10px' }}>
                 <input
@@ -124,7 +143,6 @@ const Chat: React.FC = () => {
                 />
                 <button onClick={sendMessage} style={{ height: '40px', borderRadius: '20px', fontSize: '16px', background: "#646cff", alignItems: "center", justifyContent: "center", display: "flex" }}>Send</button>
             </div>
-            <div ref={messagesEndRef} />
         </div>
     );
 };
