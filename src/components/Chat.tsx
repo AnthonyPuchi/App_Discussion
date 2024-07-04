@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchUserTopicByUserIdAndTopicId, saveUserMessage, incrementUserParticipationCount, fetchUserIdByEmail } from '../service/Service';
+import { fetchUserTopicByUserIdAndTopicId, saveUserMessage, incrementUserParticipationCount, fetchUserIdByEmail, fetchNotParticipatedUsers } from '../service/Service';
 
 interface Message {
     id: number;
@@ -16,6 +16,9 @@ const Chat: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessageText, setNewMessageText] = useState<string>('');
     const [participationCount, setParticipationCount] = useState<number>(0);
+    const [notParticipatedUsers, setNotParticipatedUsers] = useState<{ firstName: string; lastName: string }[]>([]);
+    const [currentIndex, setCurrentIndex] = useState<number>(0); // Estado para mantener el índice del usuario actual
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -51,6 +54,38 @@ const Chat: React.FC = () => {
 
         loadMessagesAndResetCount();
     }, [user, topicId]);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                if (topicId) {
+                    const users = await fetchNotParticipatedUsers(topicId);
+                    setNotParticipatedUsers(users);
+                    setCurrentIndex(0); // Reinicia el índice al cargar nuevos usuarios no participantes
+                }
+            } catch (error) {
+                console.error('Error fetching users who have not participated:', error);
+            }
+        };
+
+        fetchUsers();
+    }, [topicId]);
+
+    useEffect(() => {
+        const checkParticipationCount = async () => {
+            if (participationCount > 0 && participationCount % 10 === 0) {
+                try {
+                    const users = await fetchNotParticipatedUsers(topicId);
+                    setNotParticipatedUsers(users);
+                    // No actualizamos currentIndex aquí para mantener al usuario actual hasta el siguiente cambio
+                } catch (error) {
+                    console.error('Error fetching users who have not participated:', error);
+                }
+            }
+        };
+
+        checkParticipationCount();
+    }, [participationCount, topicId]);
 
     const scrollToBottom = () => {
         if (messagesEndRef.current) {
@@ -92,6 +127,11 @@ const Chat: React.FC = () => {
                 setMessages([...messages, { id: messages.length + 1, text: newMessageText, sender: user?.name || 'Usuario' }]);
                 setNewMessageText('');
                 setParticipationCount((prevCount) => prevCount + 1);
+
+                // Verificar si se han alcanzado las 10 participaciones para cambiar el usuario no participante
+                if ((participationCount + 1) % 10 === 0 && notParticipatedUsers.length > 0) {
+                    setCurrentIndex((prevIndex) => (prevIndex + 1) % notParticipatedUsers.length);
+                }
             } else {
                 console.error('No UserTopic found for the current topic');
             }
@@ -116,15 +156,39 @@ const Chat: React.FC = () => {
 
     return (
         <div style={{ padding: '20px', margin: 'auto', height: '80vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ color: "#000" }}>Chat</h2>
-                <button onClick={handleParticipantsClick} style={{ padding: '10px 20px', borderRadius: '10px', backgroundColor: '#646cff', color: '#fff', border: 'none' }}>Participants</button>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <h2 style={{color: "#000"}}>Chat</h2>
+                <div>
+                    {notParticipatedUsers.length > 0 && (
+                        <div style={{marginBottom: '10px'}}>
+                            <label style={{color: '#000'}}>Usuarios que no han participado:</label>
+                            <ul>
+                                <li style={{color: '#000'}}>{notParticipatedUsers[currentIndex].firstName} {notParticipatedUsers[currentIndex].lastName}</li>
+                            </ul>
+                        </div>
+                    )}
+
+                </div>
+                <button onClick={handleParticipantsClick} style={{
+                    padding: '10px 20px',
+                    borderRadius: '10px',
+                    backgroundColor: '#646cff',
+                    color: '#fff',
+                    border: 'none'
+                }}>Participants
+                </button>
             </div>
-            <p style={{ color: "#000" }}>Participaciones: {participationCount}</p>
-            <div style={{ flex: 1, maxHeight: 'calc(80vh - 100px)', overflowY: 'scroll', border: '1px solid #ccc', padding: '10px', marginBottom: '10px', background: '#fff' }}>
+            <p style={{color: "#000"}}>Participaciones: {participationCount}</p>
+            <div style={{
+                flex: 1,
+                maxHeight: 'calc(80vh - 100px)',
+                overflowY: 'scroll',
+                border: '1px solid #ccc', padding: '10px', marginBottom: '10px', background: '#fff'
+            }}>
                 {messages.map((message) => (
-                    <div key={message.id} style={{ marginBottom: '10px', textAlign: message.sender === user?.name ? 'right' : 'left' }}>
-                        <div style={{ marginBottom: '5px', color: '#000' }}>{message.sender}</div>
+                    <div key={message.id}
+                         style={{marginBottom: '10px', textAlign: message.sender === user?.name ? 'right' : 'left'}}>
+                        <div style={{marginBottom: '5px', color: '#000'}}>{message.sender}</div>
                         <div style={{ backgroundColor: message.sender === 'Usuario' ? '#f0f0f0' : '#e6e6e6', color: '#000', padding: '8px 12px', borderRadius: '8px', maxWidth: '70%', wordWrap: 'break-word', display: 'inline-block', marginLeft: message.sender === 'Usuario' ? 'auto' : '0', marginRight: message.sender === 'Usuario' ? '0' : 'auto' }}>
                             {message.text}
                         </div>

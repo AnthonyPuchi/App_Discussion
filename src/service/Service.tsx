@@ -116,3 +116,20 @@ export const incrementUserParticipationCount = async (userTopicId: string): Prom
         throw error;
     }
 };
+
+export const fetchNotParticipatedUsers = async (topicId: string | undefined): Promise<{
+    firstName: string;
+    lastName: string
+}[]> => {
+    try {
+        const response = await axios.get<User[]>(`${API_URL}/participation/topic/list-not-participated-criteria/${topicId}`);
+        return response.data.map(user => ({
+            firstName: user.firstName,
+            lastName: user.lastName,
+        }));
+    } catch (error) {
+        console.error('Error fetching users who have not participated:', error);
+        throw error;
+    }
+};
+
