@@ -25,7 +25,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     <Route path="/login" element={<Login />} />
                     <Route path="/room" element={<Room />} />
                     <Route path="/topic/:roomId/:roomTitle" element={<Topic />} />
-                    <Route path="/chat/:topicId" element={<Chat topicId={''} />} />
+                    <Route path="/chat/:topicId" element={<Chat />} />
                     <Route path="/participants" element={<Participants />} />
                 </Routes>
             </BrowserRouter>

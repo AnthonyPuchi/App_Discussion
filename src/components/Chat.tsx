@@ -9,6 +9,7 @@ interface Message {
     id: number;
     text: string;
     sender: string;
+    isWarning?: boolean;
 }
 
 const Chat: React.FC = () => {
@@ -85,6 +86,11 @@ const Chat: React.FC = () => {
             return;
         }
 
+        // Añadir el mensaje del usuario al chat primero
+        const userMessage = { id: messages.length + 1, text: newMessageText, sender: user?.name || 'Usuario' };
+        setMessages([...messages, userMessage]);
+        setNewMessageText('');
+
         try {
             const email = user?.email;
             if (!email) {
@@ -105,16 +111,31 @@ const Chat: React.FC = () => {
             if (userTopic) {
                 console.log('Se encontró el UserTopic:', userTopic);
                 const userTopicId = userTopic.id;
-                await saveUserMessage(userTopicId, newMessageText);
-                await incrementUserParticipationCount(userTopicId);
-                setMessages([...messages, { id: messages.length + 1, text: newMessageText, sender: user?.name || 'Usuario' }]);
-                setNewMessageText('');
-                setParticipationCount((prevCount) => prevCount + 1);
+                const response = await saveUserMessage(userTopicId, newMessageText);
+                const analysisResult = response.analysisResult;
+
+                if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
+                    setMessages(prevMessages => [
+                        ...prevMessages,
+                        { id: prevMessages.length + 1, text: analysisResult, sender: 'Sistema', isWarning: true }
+                    ]);
+                } else {
+                    await incrementUserParticipationCount(userTopicId);
+                    setParticipationCount(prevCount => prevCount + 1);
+                }
             } else {
                 console.error('No UserTopic found for the current topic');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving user message:', error);
+            if (error.response && error.response.data) {
+                // Agrega un mensaje de advertencia en el chat con el mensaje de error del servidor
+                const errorMessage = error.response.data.message || 'Error inesperado';
+                setMessages(prevMessages => [
+                    ...prevMessages,
+                    { id: prevMessages.length + 1, text: errorMessage, sender: 'Sistema', isWarning: true }
+                ]);
+            }
         }
     };
 
@@ -155,7 +176,7 @@ const Chat: React.FC = () => {
                 {messages.map((message) => (
                     <div key={message.id}
                          style={{ marginBottom: '10px', textAlign: message.sender === user?.name ? 'right' : 'left' }}>
-                        <div style={{ marginBottom: '5px', color: '#000' }}>{message.sender}</div>
+                        <div style={{ marginBottom: '5px', color: message.isWarning ? 'red' : '#000' }}>{message.sender}</div>
                         <div style={{ backgroundColor: message.sender === 'Usuario' ? '#f0f0f0' : '#e6e6e6', color: '#000', padding: '8px 12px', borderRadius: '8px', maxWidth: '70%', wordWrap: 'break-word', display: 'inline-block', marginLeft: message.sender === 'Usuario' ? 'auto' : '0', marginRight: message.sender === 'Usuario' ? '0' : 'auto' }}>
                             {message.text}
                         </div>

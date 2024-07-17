@@ -14,33 +14,44 @@ const Login: React.FC = () => {
 
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/room'); // Redirige a /room cuando el usuario esté autenticado
+            navigate('/room');
         }
     }, [isAuthenticated, navigate]);
 
     return (
         <div style={{
             display: 'flex',
-            flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
             height: '100vh',
-            backgroundColor: '#f0f2f5' // Fondo claro para contraste
+            backgroundColor: '#f0f2f5'
         }}>
-            <h2 style={{marginBottom: '20px', color: "#000"}}>Bienvenido</h2>
-            <Button
-                style={{
-                    height: '40px',
-                    backgroundColor: '#fa541c',
-                    borderColor: '#FFA216',
-                }}
-                type="primary"
-                onClick={handleLogin}
-            >
-                Log In
-            </Button>
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '60vh',
+                width: '300px',
+                backgroundColor: '#ffffff',
+                borderRadius: '15px',
+                boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+                padding: '20px'
+            }}>
+                <h2 style={{marginBottom: '20px', color: "#000"}}>Bienvenido</h2>
+                <Button
+                    style={{
+                        height: '40px',
+                        backgroundColor: '#fa541c',
+                        borderColor: '#FFA216',
+                    }}
+                    type="primary"
+                    onClick={handleLogin}
+                >
+                    Log In
+                </Button>
+            </div>
         </div>
-
     );
 };
 

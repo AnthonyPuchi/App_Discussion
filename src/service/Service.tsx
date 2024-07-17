@@ -19,6 +19,21 @@ interface User {
     lastName: string;
 }
 
+interface Message {
+    id: string;
+    text: string;
+    sender: string;
+}
+
+export interface UserParticipation {
+    id: string;
+    userTopicId: string;
+    message: string;
+    status: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
 const API_URL = 'http://localhost:8000';
 
 export const fetchRooms = async (): Promise<Room[]> => {
@@ -75,13 +90,14 @@ export const updateUserParticipationCount = (username: string): void => {
     }));
 };
 
-export const saveUserMessage = async (userTopicId: string, message: string): Promise<void> => {
+export const saveUserMessage = async (userTopicId: string, message: string): Promise<any> => {
     try {
-        await axios.post(`${API_URL}/user-participation`, {
+        const response = await axios.post(`${API_URL}/user-participation`, {
             userTopicId,
             message,
             status: true,
         });
+        return response.data;
     } catch (error) {
         console.error('Error saving user message:', error);
         throw error;
@@ -133,3 +149,12 @@ export const fetchNotParticipatedUsers = async (topicId: string | undefined): Pr
     }
 };
 
+export const fetchMessagesByTopicId = async (topicId: string): Promise<Message[]> => {
+    try {
+        const response = await axios.get<Message[]>(`${API_URL}/user-participation/by-topic/${topicId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching messages by topic ID:', error);
+        throw error;
+    }
+};
