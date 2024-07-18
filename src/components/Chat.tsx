@@ -14,15 +14,16 @@ import {
     Message
 } from '../service/Service';
 import axios from 'axios';
+import './Chat.css';
 
 const Chat: React.FC = () => {
+    const { topicId, topicTitle } = useParams<{ topicId: string; topicTitle: string }>();
     const { user } = useAuth0();
-    const { topicId } = useParams<{ topicId: string }>();
     const navigate = useNavigate();
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessageText, setNewMessageText] = useState<string>('');
     const [participationCount, setParticipationCount] = useState<number>(0);
-    const [notParticipatedUsers, setNotParticipatedUsers] = useState<{ firstName: string; lastName: string }[]>([]);
+    const [notParticipatedUsers, setNotParticipatedUsers] = useState<{ firstName: string; lastName: string; email: string }[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -51,7 +52,7 @@ const Chat: React.FC = () => {
                         ...msg,
                         sender: msg.sender || user?.name || 'Usuario'
                     })));
-                    setParticipationCount(messagesForTopic.length);
+                    setParticipationCount(userTopic.participationCount || messagesForTopic.length);
                 } else {
                     console.log('No se encontró el UserTopic.');
                     setMessages([]);
@@ -70,7 +71,7 @@ const Chat: React.FC = () => {
             try {
                 if (topicId) {
                     const users = await fetchNotParticipatedUsers(topicId);
-                    setNotParticipatedUsers(users);
+                    setNotParticipatedUsers(users); // Aquí nos aseguramos de pasar el email
                 }
             } catch (error) {
                 console.error('Error fetching users who have not participated:', error);
@@ -128,6 +129,9 @@ const Chat: React.FC = () => {
                 if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
                     setMessages((prevMessages) => [...prevMessages, { id: prevMessages.length + 1, message: analysisResult, sender: 'Sistema', isWarning: true }]);
                 }
+
+                // Actualizar la lista de usuarios que no han participado
+                setNotParticipatedUsers((prevUsers) => prevUsers.filter((user) => user.email !== email));
             } else {
                 console.error('No UserTopic found for the current topic');
             }
@@ -155,56 +159,39 @@ const Chat: React.FC = () => {
     };
 
     return (
-        <div style={{ padding: '20px', margin: 'auto', height: '80vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ color: "#000" }}>Chat</h2>
-                <button onClick={handleParticipantsClick} style={{
-                    padding: '10px 20px',
-                    borderRadius: '10px',
-                    backgroundColor: '#646cff',
-                    color: '#fff',
-                    border: 'none'
-                }}>Participants
-                </button>
+        <div className="chat-container">
+            <div className="chat-header">
+                <h2 className="chat-title">Chat {decodeURIComponent(topicTitle as string)}</h2>
+                <button onClick={handleParticipantsClick} className="participants-button">Participants</button>
             </div>
-            <p style={{ color: "#000" }}>Participaciones: {participationCount}</p>
-            <div style={{
-                flex: 1,
-                maxHeight: 'calc(80vh - 100px)',
-                overflowY: 'scroll',
-                border: '1px solid #ccc', padding: '10px', marginBottom: '10px', background: '#fff'
-            }}>
+            <p className="participation-count">Participaciones: {participationCount}</p>
+            <div className="messages-container">
                 {messages.map((message) => (
-                    <div key={message.id}
-                         style={{ marginBottom: '10px', textAlign: message.sender === user?.name ? 'right' : 'left' }}>
-                        <div style={{ marginBottom: '5px', color: message.isWarning ? 'red' : '#000' }}>{message.sender}</div>
-                        <div style={{ backgroundColor: message.sender === user?.name ? '#f0f0f0' : '#e6e6e6', color: '#000', padding: '8px 12px', borderRadius: '8px', maxWidth: '70%', wordWrap: 'break-word', display: 'inline-block', marginLeft: message.sender === user?.name ? 'auto' : '0', marginRight: message.sender === user?.name ? '0' : 'auto' }}>
-                            {message.message}
-                        </div>
+                    <div key={message.id} className="message" style={{ textAlign: message.sender === user?.name ? 'right' : 'left' }}>
+                        <div className={`message-sender ${message.isWarning ? 'warning-message' : ''}`}>{message.sender}</div>
+                        <div className={`message-content ${message.sender === user?.name ? 'message-content-user' : ''}`}>{message.message}</div>
                     </div>
                 ))}
                 <div ref={messagesEndRef} />
             </div>
-            <div style={{ display: 'flex', marginBottom: '10px' }}>
+            <div className="input-container">
                 <input
                     type="text"
                     value={newMessageText}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
-                    style={{ flex: 1, marginRight: '10px', borderRadius: '20px', padding: '12px', border: '1px solid #ccc', fontSize: '16px', background: "#fff", color: "#000" }}
+                    className="message-input"
                     placeholder="Type your message..."
                 />
-                <button onClick={sendMessage} style={{ height: '40px', borderRadius: '20px', fontSize: '16px', background: "#646cff", alignItems: "center", justifyContent: "center", display: "flex" }}>Send</button>
+                <button onClick={sendMessage} className="send-button">Send</button>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div className="not-participated-users">
                 {notParticipatedUsers.map((user, index) => (
-                    <div key={index} style={{ textAlign: 'center', marginRight: '20px' }}>
-                        <Badge dot={Math.floor(participationCount / 10) === index + 1}>
+                    <div key={index} className="user-avatar">
+                        <Badge dot={Math.floor(participationCount / 10) === index + 1} className="custom-badge">
                             <Avatar shape="square" icon={<UserOutlined />} />
                         </Badge>
-                        <div style={{ color: '#000', marginTop: '5px' }}>
-                            {user.firstName} {user.lastName}
-                        </div>
+                        <div className="user-name">{user.firstName} {user.lastName}</div>
                     </div>
                 ))}
             </div>

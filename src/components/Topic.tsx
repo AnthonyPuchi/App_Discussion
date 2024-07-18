@@ -36,7 +36,7 @@ const Topic: React.FC = () => {
                     <List.Item key={item.id}>
                         <List.Item.Meta
                             avatar={<Avatar src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${item.id}`} />}
-                            title={<Link to={`/chat/${item.id}`}>{item.title}</Link>}
+                            title={<Link to={`/chat/${item.id}/${encodeURIComponent(item.title)}`}>{item.title}</Link>}
                             description="Descripción de las discusiones del tema"
                         />
                     </List.Item>

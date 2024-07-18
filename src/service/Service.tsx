@@ -17,6 +17,7 @@ interface User {
     id: string;
     firstName: string;
     lastName: string;
+    institutionalEmail: string;
 }
 
 export interface Message {
@@ -126,12 +127,13 @@ export const incrementUserParticipationCount = async (userTopicId: string): Prom
     }
 };
 
-export const fetchNotParticipatedUsers = async (topicId: string | undefined): Promise<{ firstName: string; lastName: string }[]> => {
+export const fetchNotParticipatedUsers = async (topicId: string | undefined): Promise<{ firstName: string; lastName: string; email: string }[]> => {
     try {
         const response = await axios.get<User[]>(`${API_URL}/participation/topic/list-not-participated-criteria/${topicId}`);
         return response.data.map(user => ({
             firstName: user.firstName,
             lastName: user.lastName,
+            email: user.institutionalEmail
         }));
     } catch (error) {
         console.error('Error fetching users who have not participated:', error);
