@@ -33,7 +33,7 @@ export interface UserParticipation {
     status: boolean;
     createdAt: string;
     updatedAt: string;
-    participationCount: number;
+    participationCount: number; // Añadida esta línea
 }
 
 export interface SaveMessageResponse {

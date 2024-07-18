@@ -3,15 +3,17 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { Avatar, Badge } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchUserTopicByUserIdAndTopicId, saveUserMessage, incrementUserParticipationCount, fetchUserIdByEmail, fetchNotParticipatedUsers, fetchMessagesByTopicId, SaveMessageResponse } from '../service/Service';
+import {
+    fetchUserTopicByUserIdAndTopicId,
+    saveUserMessage,
+    incrementUserParticipationCount,
+    fetchUserIdByEmail,
+    fetchNotParticipatedUsers,
+    fetchMessagesByTopicId,
+    SaveMessageResponse,
+    Message
+} from '../service/Service';
 import axios from 'axios';
-
-interface Message {
-    id: number;
-    text: string;
-    sender: string;
-    isWarning?: boolean;
-}
 
 const Chat: React.FC = () => {
     const { user } = useAuth0();
@@ -45,15 +47,11 @@ const Chat: React.FC = () => {
                     console.log('Se encontró el UserTopic:', userTopic);
                     const messagesForTopic = await fetchMessagesByTopicId(topicId);
                     console.log('Mensajes obtenidos:', messagesForTopic);
-
-                    const mappedMessages = messagesForTopic.map((msg) => ({
-                        id: msg.id,
-                        text: msg.message,
-                        sender: user?.name || 'Usuario' // Suponiendo que quieres usar el nombre del usuario autenticado
-                    }));
-
-                    setMessages(mappedMessages);
-                    setParticipationCount(userTopic.participationCount || 0);
+                    setMessages(messagesForTopic.map(msg => ({
+                        ...msg,
+                        sender: msg.sender || user?.name || 'Usuario'
+                    })));
+                    setParticipationCount(messagesForTopic.length);
                 } else {
                     console.log('No se encontró el UserTopic.');
                     setMessages([]);
@@ -117,7 +115,7 @@ const Chat: React.FC = () => {
             if (userTopic) {
                 console.log('Se encontró el UserTopic:', userTopic);
                 const userTopicId = userTopic.id;
-                const newMessages = [...messages, { id: messages.length + 1, text: newMessageText, sender: user?.name || 'Usuario' }];
+                const newMessages = [...messages, { id: messages.length + 1, message: newMessageText, sender: user?.name || 'Usuario' }];
                 setMessages(newMessages);
                 setNewMessageText('');
                 setParticipationCount((prevCount) => prevCount + 1);
@@ -128,7 +126,7 @@ const Chat: React.FC = () => {
                 await incrementUserParticipationCount(userTopicId);
 
                 if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
-                    setMessages((prevMessages) => [...prevMessages, { id: prevMessages.length + 1, text: analysisResult, sender: 'Sistema', isWarning: true }]);
+                    setMessages((prevMessages) => [...prevMessages, { id: prevMessages.length + 1, message: analysisResult, sender: 'Sistema', isWarning: true }]);
                 }
             } else {
                 console.error('No UserTopic found for the current topic');
@@ -137,7 +135,7 @@ const Chat: React.FC = () => {
             console.error('Error saving user message:', error);
             if (axios.isAxiosError(error) && error.response) {
                 const errorMessage = error.response.data.message || 'Error inesperado';
-                setMessages((prevMessages) => [...prevMessages, { id: prevMessages.length + 1, text: errorMessage, sender: 'Sistema', isWarning: true }]);
+                setMessages((prevMessages) => [...prevMessages, { id: prevMessages.length + 1, message: errorMessage, sender: 'Sistema', isWarning: true }]);
             }
         }
     };
@@ -180,8 +178,8 @@ const Chat: React.FC = () => {
                     <div key={message.id}
                          style={{ marginBottom: '10px', textAlign: message.sender === user?.name ? 'right' : 'left' }}>
                         <div style={{ marginBottom: '5px', color: message.isWarning ? 'red' : '#000' }}>{message.sender}</div>
-                        <div style={{ backgroundColor: message.sender === 'Usuario' ? '#f0f0f0' : '#e6e6e6', color: '#000', padding: '8px 12px', borderRadius: '8px', maxWidth: '70%', wordWrap: 'break-word', display: 'inline-block', marginLeft: message.sender === 'Usuario' ? 'auto' : '0', marginRight: message.sender === 'Usuario' ? '0' : 'auto' }}>
-                            {message.text}
+                        <div style={{ backgroundColor: message.sender === user?.name ? '#f0f0f0' : '#e6e6e6', color: '#000', padding: '8px 12px', borderRadius: '8px', maxWidth: '70%', wordWrap: 'break-word', display: 'inline-block', marginLeft: message.sender === user?.name ? 'auto' : '0', marginRight: message.sender === user?.name ? '0' : 'auto' }}>
+                            {message.message}
                         </div>
                     </div>
                 ))}
