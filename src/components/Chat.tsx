@@ -3,7 +3,8 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { Avatar, Badge } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchUserTopicByUserIdAndTopicId, saveUserMessage, incrementUserParticipationCount, fetchUserIdByEmail, fetchNotParticipatedUsers } from '../service/Service';
+import { fetchUserTopicByUserIdAndTopicId, saveUserMessage, incrementUserParticipationCount, fetchUserIdByEmail, fetchNotParticipatedUsers, fetchMessagesByTopicId, SaveMessageResponse } from '../service/Service';
+import axios from 'axios';
 
 interface Message {
     id: number;
@@ -25,7 +26,9 @@ const Chat: React.FC = () => {
     useEffect(() => {
         const loadMessagesAndResetCount = async () => {
             try {
-                const email = user?.email;
+                if (!user || !topicId) return;
+
+                const email = user.email;
                 if (!email) {
                     console.error('User email is not available');
                     return;
@@ -40,13 +43,21 @@ const Chat: React.FC = () => {
                 const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
                 if (userTopic) {
                     console.log('Se encontró el UserTopic:', userTopic);
-                    const messagesForTopic = userTopic.messages || [];
-                    setMessages(messagesForTopic);
-                    setParticipationCount(0); // Reinicia el contador de participaciones
+                    const messagesForTopic = await fetchMessagesByTopicId(topicId);
+                    console.log('Mensajes obtenidos:', messagesForTopic);
+
+                    const mappedMessages = messagesForTopic.map((msg) => ({
+                        id: msg.id,
+                        text: msg.message,
+                        sender: user?.name || 'Usuario' // Suponiendo que quieres usar el nombre del usuario autenticado
+                    }));
+
+                    setMessages(mappedMessages);
+                    setParticipationCount(userTopic.participationCount || 0);
                 } else {
                     console.log('No se encontró el UserTopic.');
                     setMessages([]);
-                    setParticipationCount(0); // Asegura que el contador se reinicie incluso si no hay mensajes
+                    setParticipationCount(0);
                 }
             } catch (error) {
                 console.error('Error loading messages:', error);
@@ -86,11 +97,6 @@ const Chat: React.FC = () => {
             return;
         }
 
-        // Añadir el mensaje del usuario al chat primero
-        const userMessage = { id: messages.length + 1, text: newMessageText, sender: user?.name || 'Usuario' };
-        setMessages([...messages, userMessage]);
-        setNewMessageText('');
-
         try {
             const email = user?.email;
             if (!email) {
@@ -111,30 +117,27 @@ const Chat: React.FC = () => {
             if (userTopic) {
                 console.log('Se encontró el UserTopic:', userTopic);
                 const userTopicId = userTopic.id;
-                const response = await saveUserMessage(userTopicId, newMessageText);
+                const newMessages = [...messages, { id: messages.length + 1, text: newMessageText, sender: user?.name || 'Usuario' }];
+                setMessages(newMessages);
+                setNewMessageText('');
+                setParticipationCount((prevCount) => prevCount + 1);
+
+                const response: SaveMessageResponse = await saveUserMessage(userTopicId, newMessageText);
                 const analysisResult = response.analysisResult;
 
+                await incrementUserParticipationCount(userTopicId);
+
                 if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
-                    setMessages(prevMessages => [
-                        ...prevMessages,
-                        { id: prevMessages.length + 1, text: analysisResult, sender: 'Sistema', isWarning: true }
-                    ]);
-                } else {
-                    await incrementUserParticipationCount(userTopicId);
-                    setParticipationCount(prevCount => prevCount + 1);
+                    setMessages((prevMessages) => [...prevMessages, { id: prevMessages.length + 1, text: analysisResult, sender: 'Sistema', isWarning: true }]);
                 }
             } else {
                 console.error('No UserTopic found for the current topic');
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error saving user message:', error);
-            if (error.response && error.response.data) {
-                // Agrega un mensaje de advertencia en el chat con el mensaje de error del servidor
+            if (axios.isAxiosError(error) && error.response) {
                 const errorMessage = error.response.data.message || 'Error inesperado';
-                setMessages(prevMessages => [
-                    ...prevMessages,
-                    { id: prevMessages.length + 1, text: errorMessage, sender: 'Sistema', isWarning: true }
-                ]);
+                setMessages((prevMessages) => [...prevMessages, { id: prevMessages.length + 1, text: errorMessage, sender: 'Sistema', isWarning: true }]);
             }
         }
     };

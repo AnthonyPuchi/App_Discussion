@@ -19,10 +19,11 @@ interface User {
     lastName: string;
 }
 
-interface Message {
-    id: string;
-    text: string;
+export interface Message {
+    id: number;
+    message: string;
     sender: string;
+    isWarning?: boolean;
 }
 
 export interface UserParticipation {
@@ -32,6 +33,12 @@ export interface UserParticipation {
     status: boolean;
     createdAt: string;
     updatedAt: string;
+    participationCount: number;
+}
+
+export interface SaveMessageResponse {
+    userParticipation: UserParticipation;
+    analysisResult: string;
 }
 
 const API_URL = 'http://localhost:8000';
@@ -76,23 +83,9 @@ export const fetchUserIdByEmail = async (email: string): Promise<string | null> 
     }
 };
 
-export const getUserParticipationCount = (username: string): number => {
-    const userMessagesCount = JSON.parse(localStorage.getItem('userMessagesCount') || '{}');
-    return userMessagesCount[username] || 0;
-};
-
-export const updateUserParticipationCount = (username: string): void => {
-    const userMessagesCount = JSON.parse(localStorage.getItem('userMessagesCount') || '{}');
-    const count = userMessagesCount[username] || 0;
-    localStorage.setItem('userMessagesCount', JSON.stringify({
-        ...userMessagesCount,
-        [username]: count + 1,
-    }));
-};
-
-export const saveUserMessage = async (userTopicId: string, message: string): Promise<any> => {
+export const saveUserMessage = async (userTopicId: string, message: string): Promise<SaveMessageResponse> => {
     try {
-        const response = await axios.post(`${API_URL}/user-participation`, {
+        const response = await axios.post<SaveMessageResponse>(`${API_URL}/user-participation`, {
             userTopicId,
             message,
             status: true,
@@ -104,11 +97,11 @@ export const saveUserMessage = async (userTopicId: string, message: string): Pro
     }
 };
 
-export const fetchUserTopicByUserIdAndTopicId = async (userId: string, topicId: string | undefined) => {
+export const fetchUserTopicByUserIdAndTopicId = async (userId: string, topicId: string | undefined): Promise<UserParticipation> => {
     try {
-        const response = await axios.get(`${API_URL}/users-topics/user/${userId}/topic/${topicId}`);
+        const response = await axios.get<UserParticipation>(`${API_URL}/users-topics/user/${userId}/topic/${topicId}`);
         return response.data;
-    } catch (error: unknown) {
+    } catch (error) {
         if (axios.isAxiosError(error)) {
             const axiosError = error as AxiosError;
             if (axiosError.response && axiosError.response.status === 404) {
@@ -133,10 +126,7 @@ export const incrementUserParticipationCount = async (userTopicId: string): Prom
     }
 };
 
-export const fetchNotParticipatedUsers = async (topicId: string | undefined): Promise<{
-    firstName: string;
-    lastName: string
-}[]> => {
+export const fetchNotParticipatedUsers = async (topicId: string | undefined): Promise<{ firstName: string; lastName: string }[]> => {
     try {
         const response = await axios.get<User[]>(`${API_URL}/participation/topic/list-not-participated-criteria/${topicId}`);
         return response.data.map(user => ({
