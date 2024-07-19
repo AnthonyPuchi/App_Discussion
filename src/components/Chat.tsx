@@ -13,8 +13,11 @@ import {
     SaveMessageResponse,
     Message
 } from '../service/Service';
-import axios from 'axios';
+import io from 'socket.io-client';
 import './Chat.css';
+import axios from "axios";
+
+const socket = io('http://localhost:8000');
 
 const Chat: React.FC = () => {
     const { topicId, topicTitle } = useParams<{ topicId: string; topicTitle: string }>();
@@ -23,7 +26,7 @@ const Chat: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessageText, setNewMessageText] = useState<string>('');
     const [participationCount, setParticipationCount] = useState<number>(0);
-    const [notParticipatedUsers, setNotParticipatedUsers] = useState<{ firstName: string; lastName: string; email: string }[]>([]);
+    const [notParticipatedUsers, setNotParticipatedUsers] = useState<{ firstName: string; lastName: string }[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -43,18 +46,21 @@ const Chat: React.FC = () => {
                     return;
                 }
 
-                const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
-                if (userTopic) {
+                try {
+                    const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
                     console.log('Se encontró el UserTopic:', userTopic);
                     const messagesForTopic = await fetchMessagesByTopicId(topicId);
                     console.log('Mensajes obtenidos:', messagesForTopic);
-                    setMessages(messagesForTopic.map(msg => ({
-                        ...msg,
-                        sender: msg.sender || user?.name || 'Usuario'
-                    })));
-                    setParticipationCount(userTopic.participationCount || messagesForTopic.length);
-                } else {
-                    console.log('No se encontró el UserTopic.');
+
+                    const updatedMessages = messagesForTopic.map(message => ({
+                        ...message,
+                        sender: message.sender || 'Desconocido'
+                    }));
+
+                    setMessages(updatedMessages);
+                    setParticipationCount(updatedMessages.length);
+                } catch (error) {
+                    console.error('Error loading messages:', error);
                     setMessages([]);
                     setParticipationCount(0);
                 }
@@ -71,7 +77,7 @@ const Chat: React.FC = () => {
             try {
                 if (topicId) {
                     const users = await fetchNotParticipatedUsers(topicId);
-                    setNotParticipatedUsers(users); // Aquí nos aseguramos de pasar el email
+                    setNotParticipatedUsers(users);
                 }
             } catch (error) {
                 console.error('Error fetching users who have not participated:', error);
@@ -91,6 +97,18 @@ const Chat: React.FC = () => {
         scrollToBottom();
     }, [messages]);
 
+    useEffect(() => {
+        const handleMessage = (newMessage: Message) => {
+            setMessages((prevMessages) => [...prevMessages, newMessage]);
+        };
+
+        socket.on('newMessage', handleMessage);
+
+        return () => {
+            socket.off('newMessage', handleMessage);
+        };
+    }, []);
+
     const sendMessage = async () => {
         if (newMessageText.trim() === '') {
             return;
@@ -98,6 +116,7 @@ const Chat: React.FC = () => {
 
         try {
             const email = user?.email;
+            const name = user?.name || 'Usuario';
             if (!email) {
                 console.error('User email is not available');
                 return;
@@ -109,17 +128,16 @@ const Chat: React.FC = () => {
                 return;
             }
 
-            console.log('userId:', userId);
-            console.log('topicId:', topicId);
-
-            const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
-            if (userTopic) {
+            try {
+                const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
                 console.log('Se encontró el UserTopic:', userTopic);
                 const userTopicId = userTopic.id;
-                const newMessages = [...messages, { id: messages.length + 1, message: newMessageText, sender: user?.name || 'Usuario' }];
-                setMessages(newMessages);
+                const newMessage: Message = { id: messages.length + 1, message: newMessageText, sender: name };
                 setNewMessageText('');
                 setParticipationCount((prevCount) => prevCount + 1);
+
+                socket.emit('sendMessage', newMessage);
+                setMessages((prevMessages) => [...prevMessages, newMessage]);
 
                 const response: SaveMessageResponse = await saveUserMessage(userTopicId, newMessageText);
                 const analysisResult = response.analysisResult;
@@ -127,19 +145,26 @@ const Chat: React.FC = () => {
                 await incrementUserParticipationCount(userTopicId);
 
                 if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
-                    setMessages((prevMessages) => [...prevMessages, { id: prevMessages.length + 1, message: analysisResult, sender: 'Sistema', isWarning: true }]);
+                    const warningMessage: Message = { id: messages.length + 2, message: analysisResult, sender: 'Sistema', isWarning: true };
+                    setMessages((prevMessages) => [...prevMessages, warningMessage]);
                 }
-
-                // Actualizar la lista de usuarios que no han participado
-                setNotParticipatedUsers((prevUsers) => prevUsers.filter((user) => user.email !== email));
-            } else {
-                console.error('No UserTopic found for the current topic');
+            } catch (error) {
+                console.error('Error saving user message:', error);
+                if (axios.isAxiosError(error) && error.response) {
+                    const errorMessage = error.response.data.message || 'Error inesperado';
+                    const systemMessage: Message = { id: messages.length + 1, message: errorMessage, sender: 'Sistema', isWarning: true };
+                    setMessages((prevMessages) => [...prevMessages, systemMessage]);
+                } else {
+                    const systemMessage: Message = { id: messages.length + 1, message: 'Error: UserTopic not found', sender: 'Sistema', isWarning: true };
+                    setMessages((prevMessages) => [...prevMessages, systemMessage]);
+                }
             }
         } catch (error) {
             console.error('Error saving user message:', error);
             if (axios.isAxiosError(error) && error.response) {
                 const errorMessage = error.response.data.message || 'Error inesperado';
-                setMessages((prevMessages) => [...prevMessages, { id: prevMessages.length + 1, message: errorMessage, sender: 'Sistema', isWarning: true }]);
+                const systemMessage: Message = { id: messages.length + 1, message: errorMessage, sender: 'Sistema', isWarning: true };
+                setMessages((prevMessages) => [...prevMessages, systemMessage]);
             }
         }
     };
@@ -161,37 +186,42 @@ const Chat: React.FC = () => {
     return (
         <div className="chat-container">
             <div className="chat-header">
-                <h2 className="chat-title">Chat {decodeURIComponent(topicTitle as string)}</h2>
+                <h2>Chat {decodeURIComponent(topicTitle as string)}</h2>
                 <button onClick={handleParticipantsClick} className="participants-button">Participants</button>
             </div>
-            <p className="participation-count">Participaciones: {participationCount}</p>
-            <div className="messages-container">
-                {messages.map((message) => (
-                    <div key={message.id} className="message" style={{ textAlign: message.sender === user?.name ? 'right' : 'left' }}>
-                        <div className={`message-sender ${message.isWarning ? 'warning-message' : ''}`}>{message.sender}</div>
-                        <div className={`message-content ${message.sender === user?.name ? 'message-content-user' : ''}`}>{message.message}</div>
+            <div className="participation-count">
+                <p>Participaciones: {participationCount}</p>
+            </div>
+
+            <div className="chat-messages">
+                {messages.map((message, index) => (
+                    <div key={index} className={`chat-message ${message.sender === user?.name ? 'chat-message-sent' : 'chat-message-received'}`}>
+                        <div className="chat-message-sender">{message.sender}</div>
+                        <div className={`chat-message-content ${message.isWarning ? 'chat-message-warning' : ''}`}>
+                            {message.message}
+                        </div>
                     </div>
                 ))}
                 <div ref={messagesEndRef} />
             </div>
-            <div className="input-container">
+            <div className="chat-input-container">
                 <input
                     type="text"
                     value={newMessageText}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
-                    className="message-input"
+                    className="chat-input"
                     placeholder="Type your message..."
                 />
-                <button onClick={sendMessage} className="send-button">Send</button>
+                <button onClick={sendMessage} className="chat-send-button">Send</button>
             </div>
             <div className="not-participated-users">
                 {notParticipatedUsers.map((user, index) => (
-                    <div key={index} className="user-avatar">
-                        <Badge dot={Math.floor(participationCount / 10) === index + 1} className="custom-badge">
+                    <div key={index} className="not-participated-user">
+                        <Badge dot={Math.floor(participationCount / 10) === index + 1}>
                             <Avatar shape="square" icon={<UserOutlined />} />
                         </Badge>
-                        <div className="user-name">{user.firstName} {user.lastName}</div>
+                        <div>{user.firstName} {user.lastName}</div>
                     </div>
                 ))}
             </div>
