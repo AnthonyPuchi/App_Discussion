@@ -186,7 +186,7 @@ const Chat: React.FC = () => {
     return (
         <div className="chat-container">
             <div className="chat-header">
-                <h2>Chat {decodeURIComponent(topicTitle as string)}</h2>
+                <h2>¡Comparte tus ideas y participa en la conversación de {decodeURIComponent(topicTitle as string)}!</h2>
                 <button onClick={handleParticipantsClick} className="participants-button">Participants</button>
             </div>
             <div className="participation-count">
