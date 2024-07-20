@@ -132,12 +132,11 @@ const Chat: React.FC = () => {
                 const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
                 console.log('Se encontró el UserTopic:', userTopic);
                 const userTopicId = userTopic.id;
-                const newMessage: Message = { id: messages.length + 1, message: newMessageText, sender: name };
+                const newMessage: Message = { id: Date.now(), message: newMessageText, sender: name };
                 setNewMessageText('');
                 setParticipationCount((prevCount) => prevCount + 1);
 
                 socket.emit('sendMessage', newMessage);
-                setMessages((prevMessages) => [...prevMessages, newMessage]);
 
                 const response: SaveMessageResponse = await saveUserMessage(userTopicId, newMessageText);
                 const analysisResult = response.analysisResult;
@@ -145,17 +144,17 @@ const Chat: React.FC = () => {
                 await incrementUserParticipationCount(userTopicId);
 
                 if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
-                    const warningMessage: Message = { id: messages.length + 2, message: analysisResult, sender: 'Sistema', isWarning: true };
+                    const warningMessage: Message = { id: Date.now() + 1, message: analysisResult, sender: 'Sistema', isWarning: true };
                     setMessages((prevMessages) => [...prevMessages, warningMessage]);
                 }
             } catch (error) {
                 console.error('Error saving user message:', error);
                 if (axios.isAxiosError(error) && error.response) {
                     const errorMessage = error.response.data.message || 'Error inesperado';
-                    const systemMessage: Message = { id: messages.length + 1, message: errorMessage, sender: 'Sistema', isWarning: true };
+                    const systemMessage: Message = { id: Date.now() + 1, message: errorMessage, sender: 'Sistema', isWarning: true };
                     setMessages((prevMessages) => [...prevMessages, systemMessage]);
                 } else {
-                    const systemMessage: Message = { id: messages.length + 1, message: 'Error: UserTopic not found', sender: 'Sistema', isWarning: true };
+                    const systemMessage: Message = { id: Date.now() + 1, message: 'Error: UserTopic not found', sender: 'Sistema', isWarning: true };
                     setMessages((prevMessages) => [...prevMessages, systemMessage]);
                 }
             }
@@ -163,7 +162,7 @@ const Chat: React.FC = () => {
             console.error('Error saving user message:', error);
             if (axios.isAxiosError(error) && error.response) {
                 const errorMessage = error.response.data.message || 'Error inesperado';
-                const systemMessage: Message = { id: messages.length + 1, message: errorMessage, sender: 'Sistema', isWarning: true };
+                const systemMessage: Message = { id: Date.now() + 1, message: errorMessage, sender: 'Sistema', isWarning: true };
                 setMessages((prevMessages) => [...prevMessages, systemMessage]);
             }
         }
