@@ -21,7 +21,7 @@ interface User {
 }
 
 export interface Message {
-    id: number;
+    id: string;
     message: string;
     sender: string;
     isWarning?: boolean;
@@ -35,6 +35,7 @@ export interface UserParticipation {
     createdAt: string;
     updatedAt: string;
     participationCount: number; // Añadida esta línea
+    sender: string;
 }
 
 export interface SaveMessageResponse {
@@ -141,10 +142,20 @@ export const fetchNotParticipatedUsers = async (topicId: string | undefined): Pr
     }
 };
 
-export const fetchMessagesByTopicId = async (topicId: string): Promise<Message[]> => {
+export const fetchMessagesByTopicId = async (topicId: string): Promise<{
+    isWarning: boolean;
+    sender: string;
+    id: string;
+    message: string
+}[]> => {
     try {
-        const response = await axios.get<Message[]>(`${API_URL}/user-participation/by-topic/${topicId}`);
-        return response.data;
+        const response = await axios.get<UserParticipation[]>(`${API_URL}/user-participation/by-topic/${topicId}`);
+        return response.data.map(participation => ({
+            id: participation.id,
+            message: participation.message,
+            sender: participation.sender, // Asegúrate de que el backend envíe este campo
+            isWarning: participation.status
+        }));
     } catch (error) {
         console.error('Error fetching messages by topic ID:', error);
         throw error;

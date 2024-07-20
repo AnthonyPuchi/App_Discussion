@@ -29,6 +29,16 @@ const Chat: React.FC = () => {
     const [notParticipatedUsers, setNotParticipatedUsers] = useState<{ firstName: string; lastName: string }[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    const formatName = (fullName: string): string => {
+        const names = fullName.split(' ');
+        if (names.length >= 2) {
+            const firstName = names[0].charAt(0).toUpperCase() + names[0].slice(1).toLowerCase();
+            const lastName = names[names.length - 2].charAt(0).toUpperCase() + names[names.length - 2].slice(1).toLowerCase();
+            return `${firstName} ${lastName}`;
+        }
+        return fullName.charAt(0).toUpperCase() + fullName.slice(1).toLowerCase();
+    };
+
     useEffect(() => {
         const loadMessagesAndResetCount = async () => {
             try {
@@ -116,7 +126,6 @@ const Chat: React.FC = () => {
 
         try {
             const email = user?.email;
-            const name = user?.name || 'Usuario';
             if (!email) {
                 console.error('User email is not available');
                 return;
@@ -128,11 +137,14 @@ const Chat: React.FC = () => {
                 return;
             }
 
+            const fullName = user?.name || 'Usuario';
+            const formattedName = formatName(fullName);
+
             try {
                 const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
                 console.log('Se encontró el UserTopic:', userTopic);
                 const userTopicId = userTopic.id;
-                const newMessage: Message = { id: Date.now(), message: newMessageText, sender: name };
+                const newMessage: Message = { id: Date.now().toString(), message: newMessageText, sender: formattedName };
                 setNewMessageText('');
                 setParticipationCount((prevCount) => prevCount + 1);
 
@@ -144,17 +156,17 @@ const Chat: React.FC = () => {
                 await incrementUserParticipationCount(userTopicId);
 
                 if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
-                    const warningMessage: Message = { id: Date.now() + 1, message: analysisResult, sender: 'Sistema', isWarning: true };
+                    const warningMessage: Message = { id: (Date.now() + 1).toString(), message: analysisResult, sender: 'Sistema', isWarning: true };
                     setMessages((prevMessages) => [...prevMessages, warningMessage]);
                 }
             } catch (error) {
                 console.error('Error saving user message:', error);
                 if (axios.isAxiosError(error) && error.response) {
                     const errorMessage = error.response.data.message || 'Error inesperado';
-                    const systemMessage: Message = { id: Date.now() + 1, message: errorMessage, sender: 'Sistema', isWarning: true };
+                    const systemMessage: Message = { id: (Date.now() + 1).toString(), message: errorMessage, sender: 'Sistema', isWarning: true };
                     setMessages((prevMessages) => [...prevMessages, systemMessage]);
                 } else {
-                    const systemMessage: Message = { id: Date.now() + 1, message: 'Error: UserTopic not found', sender: 'Sistema', isWarning: true };
+                    const systemMessage: Message = { id: (Date.now() + 1).toString(), message: 'Error: UserTopic not found', sender: 'Sistema', isWarning: true };
                     setMessages((prevMessages) => [...prevMessages, systemMessage]);
                 }
             }
@@ -162,7 +174,7 @@ const Chat: React.FC = () => {
             console.error('Error saving user message:', error);
             if (axios.isAxiosError(error) && error.response) {
                 const errorMessage = error.response.data.message || 'Error inesperado';
-                const systemMessage: Message = { id: Date.now() + 1, message: errorMessage, sender: 'Sistema', isWarning: true };
+                const systemMessage: Message = { id: (Date.now() + 1).toString(), message: errorMessage, sender: 'Sistema', isWarning: true };
                 setMessages((prevMessages) => [...prevMessages, systemMessage]);
             }
         }
@@ -194,7 +206,7 @@ const Chat: React.FC = () => {
 
             <div className="chat-messages">
                 {messages.map((message, index) => (
-                    <div key={index} className={`chat-message ${message.sender === user?.name ? 'chat-message-sent' : 'chat-message-received'}`}>
+                    <div key={index} className={`chat-message ${message.sender === formatName(user?.name || '') ? 'chat-message-sent' : 'chat-message-received'}`}>
                         <div className="chat-message-sender">{message.sender}</div>
                         <div className={`chat-message-content ${message.isWarning ? 'chat-message-warning' : ''}`}>
                             {message.message}

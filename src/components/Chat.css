@@ -4,21 +4,21 @@
     height: 80vh;
     display: flex;
     flex-direction: column;
-    background-color: #f0f2f5; /* Fondo claro para el contenedor del chat */
-    border-radius: 10px; /* Bordes redondeados para el contenedor */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para darle profundidad */
+    background-color: #f0f2f5;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .chat-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #7d91b5; /* Fondo gris oscuro para el encabezado */
+    background-color: #7d91b5;
     padding: 10px;
-    border-radius: 10px 10px 0 0; /* Bordes redondeados en la parte superior */
-    color: #fff; /* Texto blanco */
-    font-weight: bold; /* Texto en negrita */
-    font-size: 18px; /* Tamaño de fuente aumentado para mayor legibilidad */
+    border-radius: 10px 10px 0 0;
+    color: #fff;
+    font-weight: bold;
+    font-size: 18px;
 }
 
 .participation-count {
@@ -31,13 +31,13 @@
     background-color: #5960c6;
     color: #fff;
     border: none;
-    cursor: pointer; /* Manito de cursor al pasar por el botón */
-    transition: background-color 0.3s ease; /* Transición suave al pasar por el botón */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
     font-size: 16px;
 }
 
 .participants-button:hover {
-    background-color: #4754d6; /* Cambio de color al pasar por el botón */
+    background-color: #4754d6;
 }
 
 .chat-messages {
@@ -48,8 +48,8 @@
     padding: 10px;
     margin-bottom: 10px;
     background: #fff;
-    border-radius: 0 0 10px 10px; /* Bordes redondeados en la parte inferior */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para darle profundidad */
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .chat-message {
@@ -70,8 +70,8 @@
 
 .chat-message-sender {
     margin-bottom: 5px;
-    color: #555; /* Texto gris para el remitente */
-    font-weight: bold; /* Texto en negrita para el remitente */
+    color: #555;
+    font-weight: bold;
 }
 
 .chat-message-content {
@@ -85,21 +85,21 @@
 }
 
 .chat-message-sent .chat-message-content {
-    background-color: #d1ecf1; /* Fondo azul claro para mensajes enviados */
-    color: #0c5460; /* Texto azul oscuro para mensajes enviados */
+    background-color: #d1ecf1;
+    color: #0c5460;
 }
 
 .chat-message-received .chat-message-content {
-    background-color: #f8d7da; /* Fondo rojo claro para mensajes recibidos */
-    color: #721c24; /* Texto rojo oscuro para mensajes recibidos */
+    background-color: #f8d7da;
+    color: #721c24;
 }
 
 .chat-message-warning {
     color: red;
-    background-color: #f8d7da; /* Fondo rojo claro para mensajes de advertencia */
-    padding: 10px; /* Aumentar el padding para mayor visibilidad */
-    border-left: 5px solid #f5c6cb; /* Borde rojo a la izquierda para mayor visibilidad */
-    border-radius: 5px; /* Bordes redondeados para el mensaje de advertencia */
+    background-color: #f8d7da;
+    padding: 10px;
+
+    border-radius: 5px;
 }
 
 .chat-input-container {
@@ -116,11 +116,11 @@
     font-size: 16px;
     background: #fff;
     color: #000;
-    transition: border-color 0.3s ease; /* Transición suave para el borde */
+    transition: border-color 0.3s ease;
 }
 
 .chat-input:focus {
-    border-color: #646cff; /* Cambio de color del borde al enfocar */
+    border-color: #646cff;
 }
 
 .chat-send-button {
@@ -128,31 +128,31 @@
     border-radius: 20px;
     font-size: 16px;
     background: #646cff;
-    color: #fff; /* Texto blanco */
+    color: #fff;
     align-items: center;
     justify-content: center;
     display: flex;
-    cursor: pointer; /* Manito de cursor al pasar por el botón */
-    transition: background-color 0.3s ease; /* Transición suave al pasar por el botón */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .chat-send-button:hover {
-    background-color: #4754d6; /* Cambio de color al pasar por el botón */
+    background-color: #4754d6;
 }
 
 .not-participated-users {
     display: flex;
     align-items: center;
-    background-color: #f0f2f5; /* Fondo claro para la sección de usuarios no participados */
-    padding: 10px; /* Relleno para la sección de usuarios no participados */
-    border-radius: 10px; /* Bordes redondeados para la sección de usuarios no participados */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para darle profundidad */
+    background-color: #f0f2f5;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     margin-bottom: 10px;
 }
 
 .not-participated-user {
     text-align: center;
     margin-right: 20px;
-    color: #333; /* Texto oscuro para los usuarios no participados */
+    color: #333;
     font-size: 14px;
 }
