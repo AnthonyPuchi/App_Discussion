@@ -26,6 +26,7 @@ const Chat: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessageText, setNewMessageText] = useState<string>('');
     const [participationCount, setParticipationCount] = useState<number>(0);
+    const [totalParticipationCount, setTotalParticipationCount] = useState<number>(0);
     const [notParticipatedUsers, setNotParticipatedUsers] = useState<{ firstName: string; lastName: string }[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -68,11 +69,13 @@ const Chat: React.FC = () => {
                     }));
 
                     setMessages(updatedMessages);
-                    setParticipationCount(updatedMessages.length);
+                    setParticipationCount(userTopic.participationCount || 0);
+                    setTotalParticipationCount(updatedMessages.length);
                 } catch (error) {
                     console.error('Error loading messages:', error);
                     setMessages([]);
                     setParticipationCount(0);
+                    setTotalParticipationCount(0);
                 }
             } catch (error) {
                 console.error('Error loading messages:', error);
@@ -110,6 +113,7 @@ const Chat: React.FC = () => {
     useEffect(() => {
         const handleMessage = (newMessage: Message) => {
             setMessages((prevMessages) => [...prevMessages, newMessage]);
+            setTotalParticipationCount((prevCount) => prevCount + 1);
         };
 
         socket.on('newMessage', handleMessage);
@@ -156,18 +160,23 @@ const Chat: React.FC = () => {
                 await incrementUserParticipationCount(userTopicId);
 
                 if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
-                    const warningMessage: Message = { id: (Date.now() + 1).toString(), message: analysisResult, sender: 'Sistema', isWarning: true };
-                    setMessages((prevMessages) => [...prevMessages, warningMessage]);
+                    const systemMessage: Message = {
+                        id: (Date.now() + 1).toString(),
+                        message: `Análisis: ${analysisResult} - Participaciones generales: ${totalParticipationCount + 1}`,
+                        sender: 'Sistema',
+                        isWarning: true
+                    };
+                    socket.emit('sendMessage', systemMessage);
                 }
             } catch (error) {
                 console.error('Error saving user message:', error);
                 if (axios.isAxiosError(error) && error.response) {
                     const errorMessage = error.response.data.message || 'Error inesperado';
                     const systemMessage: Message = { id: (Date.now() + 1).toString(), message: errorMessage, sender: 'Sistema', isWarning: true };
-                    setMessages((prevMessages) => [...prevMessages, systemMessage]);
+                    socket.emit('sendMessage', systemMessage);
                 } else {
                     const systemMessage: Message = { id: (Date.now() + 1).toString(), message: 'Error: UserTopic not found', sender: 'Sistema', isWarning: true };
-                    setMessages((prevMessages) => [...prevMessages, systemMessage]);
+                    socket.emit('sendMessage', systemMessage);
                 }
             }
         } catch (error) {
@@ -175,7 +184,7 @@ const Chat: React.FC = () => {
             if (axios.isAxiosError(error) && error.response) {
                 const errorMessage = error.response.data.message || 'Error inesperado';
                 const systemMessage: Message = { id: (Date.now() + 1).toString(), message: errorMessage, sender: 'Sistema', isWarning: true };
-                setMessages((prevMessages) => [...prevMessages, systemMessage]);
+                socket.emit('sendMessage', systemMessage);
             }
         }
     };
@@ -201,7 +210,8 @@ const Chat: React.FC = () => {
                 <button onClick={handleParticipantsClick} className="participants-button">Participants</button>
             </div>
             <div className="participation-count">
-                <p>Participaciones: {participationCount}</p>
+                <p>Participaciones del usuario: {participationCount}</p>
+                <p>Participaciones totales: {totalParticipationCount}</p>
             </div>
 
             <div className="chat-messages">
@@ -229,7 +239,7 @@ const Chat: React.FC = () => {
             <div className="not-participated-users">
                 {notParticipatedUsers.map((user, index) => (
                     <div key={index} className="not-participated-user">
-                        <Badge dot={Math.floor(participationCount / 10) === index + 1}>
+                        <Badge dot={Math.floor(totalParticipationCount / 10) === index + 1}>
                             <Avatar shape="square" icon={<UserOutlined />} />
                         </Badge>
                         <div>{user.firstName} {user.lastName}</div>
