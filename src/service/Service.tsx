@@ -153,11 +153,22 @@ export const fetchMessagesByTopicId = async (topicId: string): Promise<{
         return response.data.map(participation => ({
             id: participation.id,
             message: participation.message,
-            sender: participation.sender, // Asegúrate de que el backend envíe este campo
+            sender: participation.sender,
             isWarning: participation.status
         }));
     } catch (error) {
         console.error('Error fetching messages by topic ID:', error);
+        throw error;
+    }
+};
+
+export const fetchParticipantsByTopicId = async (topicId: string): Promise<{ firstName: string; lastName: string }[]> => {
+    try {
+        const response = await axios.get<{ firstName: string; lastName: string }[]>(`${API_URL}/participation/participants/${topicId}`);
+        console.log('API Response:', response.data); // Log para depurar
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching participants by topic ID:', error);
         throw error;
     }
 };

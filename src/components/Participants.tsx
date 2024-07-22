@@ -1,28 +1,48 @@
-import React from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import React, { useState, useEffect } from 'react';
 import { List, Avatar } from 'antd';
+import { useParams } from 'react-router-dom';
+import { fetchParticipantsByTopicId } from '../service/Service';
+import './Participants.css';
 
 const Participants: React.FC = () => {
-    const { user } = useAuth0();
+    const { topicId } = useParams<{ topicId: string }>();
+    const [participants, setParticipants] = useState<{ name: string; picture: string }[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const participants = [
-        {
-            name: user?.name || 'Usuario',
-            picture: user?.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${user?.name || 'Usuario'}`,
-        },
-    ];
+    useEffect(() => {
+
+        const loadParticipants = async () => {
+            try {
+                if (topicId) {
+                    const participantsList = await fetchParticipantsByTopicId(topicId);
+                    const formattedParticipants = participantsList.map(user => ({
+                        name: `${user.firstName} ${user.lastName}`,
+                        picture: `https://api.dicebear.com/7.x/miniavs/svg?seed=${user.firstName}${user.lastName}`,
+                    }));
+                    setParticipants(formattedParticipants);
+                }
+            } catch (error) {
+                console.error('Error fetching participants:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadParticipants();
+    }, [topicId]);
 
     return (
-        <div style={{ padding: '20px', maxWidth: '600px' }}>
-            <h2 style={{ marginBottom: '20px', color: "#000" }}>Participantes</h2>
+        <div className="participants-container">
+            <h2 className="participants-title">Participantes</h2>
             <List
+                loading={loading}
                 itemLayout="horizontal"
                 dataSource={participants}
                 renderItem={participant => (
-                    <List.Item>
+                    <List.Item className="participants-list-item">
                         <List.Item.Meta
                             avatar={<Avatar src={participant.picture} />}
-                            title={<span>{participant.name}</span>}
+                            title={<span style={{ color: '#1890ff', fontWeight: 'bold' }}>{participant.name}</span>}
                         />
                     </List.Item>
                 )}

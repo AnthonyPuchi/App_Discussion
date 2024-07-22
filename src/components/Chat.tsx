@@ -114,6 +114,11 @@ const Chat: React.FC = () => {
         const handleMessage = (newMessage: Message) => {
             setMessages((prevMessages) => [...prevMessages, newMessage]);
             setTotalParticipationCount((prevCount) => prevCount + 1);
+
+            setNotParticipatedUsers((prevUsers) => {
+                const updatedUsers = prevUsers.filter((user) => `${user.firstName} ${user.lastName}` !== newMessage.sender);
+                return [...updatedUsers, { firstName: newMessage.sender.split(' ')[0], lastName: newMessage.sender.split(' ')[1] }];
+            });
         };
 
         socket.on('newMessage', handleMessage);
@@ -146,7 +151,6 @@ const Chat: React.FC = () => {
 
             try {
                 const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
-                console.log('Se encontró el UserTopic:', userTopic);
                 const userTopicId = userTopic.id;
                 const newMessage: Message = { id: Date.now().toString(), message: newMessageText, sender: formattedName };
                 setNewMessageText('');
@@ -189,18 +193,19 @@ const Chat: React.FC = () => {
         }
     };
 
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setNewMessageText(event.target.value);
     };
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === 'Enter') {
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
             sendMessage();
         }
     };
 
     const handleParticipantsClick = () => {
-        navigate('/participants');
+        navigate(`/participants/${topicId}`);
     };
 
     return (
@@ -226,8 +231,7 @@ const Chat: React.FC = () => {
                 <div ref={messagesEndRef} />
             </div>
             <div className="chat-input-container">
-                <input
-                    type="text"
+                <textarea
                     value={newMessageText}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
