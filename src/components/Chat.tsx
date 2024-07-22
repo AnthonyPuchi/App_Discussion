@@ -163,14 +163,16 @@ const Chat: React.FC = () => {
 
                 await incrementUserParticipationCount(userTopicId);
 
+                if ((totalParticipationCount + 1) % 10 === 0) {
                 if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
-                    const systemMessage: Message = {
-                        id: (Date.now() + 1).toString(),
-                        message: `Análisis: ${analysisResult} - Participaciones generales: ${totalParticipationCount + 1}`,
-                        sender: 'Sistema',
-                        isWarning: true
-                    };
-                    socket.emit('sendMessage', systemMessage);
+                        const systemMessage: Message = {
+                            id: (Date.now() + 1).toString(),
+                            message: `Análisis: ${analysisResult} - Participaciones generales: ${totalParticipationCount + 1}`,
+                            sender: 'Sistema',
+                            isWarning: true
+                        };
+                        socket.emit('sendMessage', systemMessage);
+                    }
                 }
             } catch (error) {
                 console.error('Error saving user message:', error);
@@ -241,7 +243,9 @@ const Chat: React.FC = () => {
                 <button onClick={sendMessage} className="chat-send-button">Send</button>
             </div>
             <div className="not-participated-users">
-                {notParticipatedUsers.map((user, index) => (
+                {notParticipatedUsers
+                    .filter((user) => user.firstName !== 'Sistema')
+                    .map((user, index) => (
                     <div key={index} className="not-participated-user">
                         <Badge dot={Math.floor(totalParticipationCount / 10) === index + 1}>
                             <Avatar shape="square" icon={<UserOutlined />} />

@@ -157,3 +157,20 @@
     color: #333;
     font-size: 14px;
 }
+@media (max-width: 768px) {
+    .chat-header h2 {
+        font-size: 1rem;
+    }
+
+    .chat-input {
+        font-size: 0.9rem;
+    }
+
+    .chat-send-button {
+        padding: 5px 10px;
+    }
+
+    .not-participated-user div {
+        font-size: 0.8rem;
+    }
+}
