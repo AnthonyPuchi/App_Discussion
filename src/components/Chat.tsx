@@ -117,7 +117,8 @@ const Chat: React.FC = () => {
 
             setNotParticipatedUsers((prevUsers) => {
                 const updatedUsers = prevUsers.filter((user) => `${user.firstName} ${user.lastName}` !== newMessage.sender);
-                return [...updatedUsers, { firstName: newMessage.sender.split(' ')[0], lastName: newMessage.sender.split(' ')[1] }];
+                updatedUsers.push({ firstName: newMessage.sender.split(' ')[0], lastName: newMessage.sender.split(' ')[1] });
+                return updatedUsers;
             });
         };
 
@@ -164,7 +165,7 @@ const Chat: React.FC = () => {
                 await incrementUserParticipationCount(userTopicId);
 
                 if ((totalParticipationCount + 1) % 10 === 0) {
-                if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
+                    if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
                         const systemMessage: Message = {
                             id: (Date.now() + 1).toString(),
                             message: `Análisis: ${analysisResult} - Participaciones generales: ${totalParticipationCount + 1}`,
@@ -246,13 +247,13 @@ const Chat: React.FC = () => {
                 {notParticipatedUsers
                     .filter((user) => user.firstName !== 'Sistema')
                     .map((user, index) => (
-                    <div key={index} className="not-participated-user">
-                        <Badge dot={Math.floor(totalParticipationCount / 10) === index + 1}>
-                            <Avatar shape="square" icon={<UserOutlined />} />
-                        </Badge>
-                        <div>{user.firstName} {user.lastName}</div>
-                    </div>
-                ))}
+                        <div key={index} className="not-participated-user">
+                            <Badge count={(index === 0 && totalParticipationCount % 10 === 0) ? 'participa' : 0} showZero={false}>
+                                <Avatar shape="square" icon={<UserOutlined />} />
+                            </Badge>
+                            <div>{user.firstName} {user.lastName}</div>
+                        </div>
+                    ))}
             </div>
         </div>
     );
