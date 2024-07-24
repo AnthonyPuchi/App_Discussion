@@ -1,29 +1,104 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { useNavigate } from 'react-router-dom';
-import { updateUserParticipationCount, getUserParticipationCount } from '../service/Service';
+import { Avatar, Badge } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+    fetchUserTopicByUserIdAndTopicId,
+    saveUserMessage,
+    incrementUserParticipationCount,
+    fetchUserIdByEmail,
+    fetchNotParticipatedUsers,
+    fetchMessagesByTopicId,
+    SaveMessageResponse,
+    Message
+} from '../service/Service';
+import io from 'socket.io-client';
+import './Chat.css';
+import axios from "axios";
 
-interface Message {
-    id: number;
-    text: string;
-    sender: string;
-}
+const socket = io('http://localhost:8000');
 
 const Chat: React.FC = () => {
+    const { topicId, topicTitle } = useParams<{ topicId: string; topicTitle: string }>();
     const { user } = useAuth0();
     const navigate = useNavigate();
-    const [messages, setMessages] = useState<Message[]>(() => {
-        const savedMessages = localStorage.getItem('messages');
-        return savedMessages ? JSON.parse(savedMessages) : [];
-    });
+    const [messages, setMessages] = useState<Message[]>([]);
     const [newMessageText, setNewMessageText] = useState<string>('');
     const [participationCount, setParticipationCount] = useState<number>(0);
+    const [totalParticipationCount, setTotalParticipationCount] = useState<number>(0);
+    const [notParticipatedUsers, setNotParticipatedUsers] = useState<{ firstName: string; lastName: string }[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    const formatName = (fullName: string): string => {
+        const names = fullName.split(' ');
+        if (names.length >= 2) {
+            const firstName = names[0].charAt(0).toUpperCase() + names[0].slice(1).toLowerCase();
+            const lastName = names[names.length - 2].charAt(0).toUpperCase() + names[names.length - 2].slice(1).toLowerCase();
+            return `${firstName} ${lastName}`;
+        }
+        return fullName.charAt(0).toUpperCase() + fullName.slice(1).toLowerCase();
+    };
+
     useEffect(() => {
-        const count = getUserParticipationCount(user?.name || 'Usuario');
-        setParticipationCount(count);
-    }, [user]);
+        const loadMessagesAndResetCount = async () => {
+            try {
+                if (!user || !topicId) return;
+
+                const email = user.email;
+                if (!email) {
+                    console.error('User email is not available');
+                    return;
+                }
+
+                const userId = await fetchUserIdByEmail(email);
+                if (!userId) {
+                    console.error('User ID not found for email:', email);
+                    return;
+                }
+
+                try {
+                    const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
+                    console.log('Se encontró el UserTopic:', userTopic);
+                    const messagesForTopic = await fetchMessagesByTopicId(topicId);
+                    console.log('Mensajes obtenidos:', messagesForTopic);
+
+                    const updatedMessages = messagesForTopic.map(message => ({
+                        ...message,
+                        sender: message.sender || 'Desconocido'
+                    }));
+
+                    setMessages(updatedMessages);
+                    setParticipationCount(userTopic.participationCount || 0);
+                    setTotalParticipationCount(updatedMessages.length);
+                } catch (error) {
+                    console.error('Error loading messages:', error);
+                    setMessages([]);
+                    setParticipationCount(0);
+                    setTotalParticipationCount(0);
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        };
+
+        loadMessagesAndResetCount();
+    }, [user, topicId]);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                if (topicId) {
+                    const users = await fetchNotParticipatedUsers(topicId);
+                    setNotParticipatedUsers(users);
+                }
+            } catch (error) {
+                console.error('Error fetching users who have not participated:', error);
+            }
+        };
+
+        fetchUsers();
+    }, [topicId]);
 
     const scrollToBottom = () => {
         if (messagesEndRef.current) {
@@ -33,68 +108,152 @@ const Chat: React.FC = () => {
 
     useEffect(() => {
         scrollToBottom();
-        localStorage.setItem('messages', JSON.stringify(messages));
     }, [messages]);
 
-    const sendMessage = () => {
+    useEffect(() => {
+        const handleMessage = (newMessage: Message) => {
+            setMessages((prevMessages) => [...prevMessages, newMessage]);
+            setTotalParticipationCount((prevCount) => prevCount + 1);
+
+            setNotParticipatedUsers((prevUsers) => {
+                const updatedUsers = prevUsers.filter((user) => `${user.firstName} ${user.lastName}` !== newMessage.sender);
+                updatedUsers.push({ firstName: newMessage.sender.split(' ')[0], lastName: newMessage.sender.split(' ')[1] });
+                return updatedUsers;
+            });
+        };
+
+        socket.on('newMessage', handleMessage);
+
+        return () => {
+            socket.off('newMessage', handleMessage);
+        };
+    }, []);
+
+    const sendMessage = async () => {
         if (newMessageText.trim() === '') {
             return;
         }
 
-        const newMessage: Message = {
-            id: messages.length + 1,
-            text: newMessageText,
-            sender: user?.name || 'Usuario',
-        };
+        try {
+            const email = user?.email;
+            if (!email) {
+                console.error('User email is not available');
+                return;
+            }
 
-        setMessages([...messages, newMessage]);
-        setNewMessageText('');
-        updateUserParticipationCount(user?.name || 'Usuario');
-        setParticipationCount((prevCount) => prevCount + 1);
+            const userId = await fetchUserIdByEmail(email);
+            if (!userId) {
+                console.error('User ID not found for email:', email);
+                return;
+            }
+
+            const fullName = user?.name || 'Usuario';
+            const formattedName = formatName(fullName);
+
+            try {
+                const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
+                const userTopicId = userTopic.id;
+                const newMessage: Message = { id: Date.now().toString(), message: newMessageText, sender: formattedName };
+                setNewMessageText('');
+                setParticipationCount((prevCount) => prevCount + 1);
+
+                socket.emit('sendMessage', newMessage);
+
+                const response: SaveMessageResponse = await saveUserMessage(userTopicId, newMessageText);
+                const analysisResult = response.analysisResult;
+
+                await incrementUserParticipationCount(userTopicId);
+
+                if ((totalParticipationCount + 1) % 10 === 0) {
+                    if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
+                        const systemMessage: Message = {
+                            id: (Date.now() + 1).toString(),
+                            message: `Análisis: ${analysisResult} - Participaciones generales: ${totalParticipationCount + 1}`,
+                            sender: 'Sistema',
+                            isWarning: true
+                        };
+                        socket.emit('sendMessage', systemMessage);
+                    }
+                }
+            } catch (error) {
+                console.error('Error saving user message:', error);
+                if (axios.isAxiosError(error) && error.response) {
+                    const errorMessage = error.response.data.message || 'Error inesperado';
+                    const systemMessage: Message = { id: (Date.now() + 1).toString(), message: errorMessage, sender: 'Sistema', isWarning: true };
+                    socket.emit('sendMessage', systemMessage);
+                } else {
+                    const systemMessage: Message = { id: (Date.now() + 1).toString(), message: 'Error: UserTopic not found', sender: 'Sistema', isWarning: true };
+                    socket.emit('sendMessage', systemMessage);
+                }
+            }
+        } catch (error) {
+            console.error('Error saving user message:', error);
+            if (axios.isAxiosError(error) && error.response) {
+                const errorMessage = error.response.data.message || 'Error inesperado';
+                const systemMessage: Message = { id: (Date.now() + 1).toString(), message: errorMessage, sender: 'Sistema', isWarning: true };
+                socket.emit('sendMessage', systemMessage);
+            }
+        }
     };
 
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setNewMessageText(event.target.value);
     };
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === 'Enter') {
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
             sendMessage();
         }
     };
 
     const handleParticipantsClick = () => {
-        navigate('/participants');
+        navigate(`/participants/${topicId}`);
     };
 
     return (
-        <div style={{ padding: '20px', margin: 'auto', height: '80vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ color: "#000" }}>Chat</h2>
-                <button onClick={handleParticipantsClick} style={{ padding: '10px 20px', borderRadius: '10px', backgroundColor: '#646cff', color: '#fff', border: 'none' }}>Participants</button>
+        <div className="chat-container">
+            <div className="chat-header">
+                <h2>¡Comparte tus ideas y participa en la conversación de {decodeURIComponent(topicTitle as string)}!</h2>
+                <button onClick={handleParticipantsClick} className="participants-button">Participants</button>
             </div>
-            <p style={{color: "#000"}}>Participaciones: {participationCount}</p>
-            <div style={{ flex: 1, maxHeight: 'calc(80vh - 100px)', overflowY: 'scroll', border: '1px solid #ccc', padding: '10px', marginBottom: '10px', background: '#fff' }}>
-                {messages.map((message) => (
-                    <div key={message.id} style={{ marginBottom: '10px', textAlign: message.sender === user?.name ? 'right' : 'left' }}>
-                        <div style={{ marginBottom: '5px', color: '#000' }}>{message.sender}</div>
-                        <div style={{ backgroundColor: message.sender === 'Usuario' ? '#f0f0f0' : '#e6e6e6', color: '#000', padding: '8px 12px', borderRadius: '8px', maxWidth: '70%', wordWrap: 'break-word', display: 'inline-block', marginLeft: message.sender === 'Usuario' ? 'auto' : '0', marginRight: message.sender === 'Usuario' ? '0' : 'auto' }}>
-                            {message.text}
+            <div className="participation-count">
+                <p>Participaciones del usuario: {participationCount}</p>
+                <p>Participaciones totales: {totalParticipationCount}</p>
+            </div>
+
+            <div className="chat-messages">
+                {messages.map((message, index) => (
+                    <div key={index} className={`chat-message ${message.sender === formatName(user?.name || '') ? 'chat-message-sent' : 'chat-message-received'}`}>
+                        <div className="chat-message-sender">{message.sender}</div>
+                        <div className={`chat-message-content ${message.isWarning ? 'chat-message-warning' : ''}`}>
+                            {message.message}
                         </div>
                     </div>
                 ))}
-
+                <div ref={messagesEndRef} />
             </div>
-            <div style={{ display: 'flex', marginBottom: '10px' }}>
-                <input
-                    type="text"
+            <div className="chat-input-container">
+                <textarea
                     value={newMessageText}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
-                    style={{ flex: 1, marginRight: '10px', borderRadius: '20px', padding: '12px', border: '1px solid #ccc', fontSize: '16px', background: "#fff", color: "#000" }}
+                    className="chat-input"
                     placeholder="Type your message..."
                 />
-                <button onClick={sendMessage} style={{ height: '40px', borderRadius: '20px', fontSize: '16px', background: "#646cff", alignItems: "center", justifyContent: "center", display: "flex" }}>Send</button>
+                <button onClick={sendMessage} className="chat-send-button">Send</button>
+            </div>
+            <div className="not-participated-users">
+                {notParticipatedUsers
+                    .filter((user) => user.firstName !== 'Sistema')
+                    .map((user, index) => (
+                        <div key={index} className="not-participated-user">
+                            <Badge count={(index === 0 && totalParticipationCount % 10 === 0) ? 'participa' : 0} showZero={false}>
+                                <Avatar shape="square" icon={<UserOutlined />} />
+                            </Badge>
+                            <div>{user.firstName} {user.lastName}</div>
+                        </div>
+                    ))}
             </div>
         </div>
     );

@@ -1,0 +1,47 @@
+body {
+    background-image: url('../assets/debateFondo.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+.participants-container {
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+    background-color: rgba(240, 242, 245, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.participants-title {
+    margin-bottom: 20px;
+    color: #1890ff;
+    font-family: 'Arial, sans-serif';
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    background-color: rgba(230, 247, 255, 0.8);
+    padding: 10px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: inline-block;
+    border: 2px solid #91d5ff;
+}
+
+.participants-list-item {
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.participants-list-item:hover {
+    background-color: rgba(230, 230, 230, 0.9);
+}
