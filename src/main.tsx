@@ -16,7 +16,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             domain="dev-npbw8xft88hxcb3x.us.auth0.com"
             clientId="Na2wl1qLSTnredsDYATQb09fVSilgWbM"
             authorizationParams={{
-                redirect_uri: `${window.location.origin}/callback`
+                redirect_uri: `${window.location.origin}/login`
             }}
         >
             <BrowserRouter>
