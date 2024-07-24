@@ -1,3 +1,4 @@
+// Login.tsx
 import React, { useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Button } from 'antd';
@@ -6,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import debateLogin from '../assets/debateLogin.jpg';
 
 const Login: React.FC = () => {
-    const { loginWithRedirect, isAuthenticated } = useAuth0();
+    const { loginWithRedirect, isAuthenticated, handleRedirectCallback, isLoading, error } = useAuth0();
     const navigate = useNavigate();
 
     const handleLogin = () => {
@@ -14,10 +15,19 @@ const Login: React.FC = () => {
     };
 
     useEffect(() => {
-        if (isAuthenticated) {
-            navigate('/room');
-        }
-    }, [isAuthenticated, navigate]);
+        const handleAuth = async () => {
+            if (window.location.search.includes('code=')) {
+                await handleRedirectCallback();
+            }
+            if (isAuthenticated) {
+                navigate('/room');
+            }
+        };
+        handleAuth();
+    }, [isAuthenticated, handleRedirectCallback, navigate]);
+
+    if (isLoading) return <div>Loading...</div>;
+    if (error) return <div>Oops... {error.message}</div>;
 
     return (
         <div style={{
