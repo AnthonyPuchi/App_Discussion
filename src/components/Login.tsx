@@ -16,10 +16,8 @@ const Login: React.FC = () => {
 
     useEffect(() => {
         const handleAuth = async () => {
-            if (window.location.search.includes('code=')) {
+            if (window.location.pathname === '/callback' && window.location.search.includes('code=')) {
                 await handleRedirectCallback();
-            }
-            if (isAuthenticated) {
                 navigate('/room');
             }
         };
