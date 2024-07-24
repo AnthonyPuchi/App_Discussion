@@ -1,4 +1,3 @@
-// Login.tsx
 import React, { useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Button } from 'antd';
@@ -7,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import debateLogin from '../assets/debateLogin.jpg';
 
 const Login: React.FC = () => {
-    const { loginWithRedirect, isAuthenticated, handleRedirectCallback, isLoading, error } = useAuth0();
+    const { loginWithRedirect, isAuthenticated } = useAuth0();
     const navigate = useNavigate();
 
     const handleLogin = () => {
@@ -15,17 +14,10 @@ const Login: React.FC = () => {
     };
 
     useEffect(() => {
-        const handleAuth = async () => {
-            if (window.location.pathname === '/callback' && window.location.search.includes('code=')) {
-                await handleRedirectCallback();
-                navigate('/room');
-            }
-        };
-        handleAuth();
-    }, [isAuthenticated, handleRedirectCallback, navigate]);
-
-    if (isLoading) return <div>Loading...</div>;
-    if (error) return <div>Oops... {error.message}</div>;
+        if (isAuthenticated) {
+            navigate('/room');
+        }
+    }, [isAuthenticated, navigate]);
 
     return (
         <div style={{
@@ -50,9 +42,7 @@ const Login: React.FC = () => {
                 boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
                 padding: '20px'
             }}>
-                <h2 style={{ marginBottom: '20px', color: "#333", fontFamily: 'Arial, sans-serif', textAlign: "center" }}>
-                    ¡Bienvenido al espacio donde tus ideas son escuchadas!
-                </h2>
+                <h2 style={{marginBottom: '20px', color: "#333", fontFamily: 'Arial, sans-serif', textAlign: "center"}}>¡Bienvenido al espacio donde tus ideas son escuchadas!</h2>
                 <Button
                     style={{
                         height: '40px',
@@ -68,10 +58,8 @@ const Login: React.FC = () => {
                 >
                     Iniciar Sesión
                 </Button>
-                <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                    <p style={{ color: '#666', fontSize: '14px' }}>
-                        ¡Únete a la conversación y atrévete a desafiar tus pensamientos y defender tus argumentos!
-                    </p>
+                <div style={{marginTop: '20px', textAlign: 'center'}}>
+                    <p style={{color: '#666', fontSize: '14px'}}>¡Unete a la conversación y Atrévete a desafiar tus pensamientos y defender tus argumentos!</p>
                 </div>
             </div>
         </div>
