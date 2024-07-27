@@ -17,8 +17,9 @@ import io from 'socket.io-client';
 import './Chat.css';
 import axios from "axios";
 
-const socket = io('http://localhost:8000');
-
+const socket = io('socketio-production-ee2e.up.railway.app', {
+    withCredentials: true,
+});
 const Chat: React.FC = () => {
     const { topicId, topicTitle } = useParams<{ topicId: string; topicTitle: string }>();
     const { user } = useAuth0();
