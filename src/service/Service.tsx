@@ -43,7 +43,7 @@ export interface SaveMessageResponse {
     analysisResult: string;
 }
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://dbparticipationbe-production.up.railway.app';
 
 export const fetchRooms = async (): Promise<Room[]> => {
     try {
