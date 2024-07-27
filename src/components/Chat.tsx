@@ -17,9 +17,10 @@ import io from 'socket.io-client';
 import './Chat.css';
 import axios from "axios";
 
-const socket = io('https://socketio-production-ee2e.up.railway.app', {
+const socket = io('http://localhost:3001', {
     withCredentials: true,
 });
+
 const Chat: React.FC = () => {
     const { topicId, topicTitle } = useParams<{ topicId: string; topicTitle: string }>();
     const { user } = useAuth0();
@@ -165,16 +166,14 @@ const Chat: React.FC = () => {
 
                 await incrementUserParticipationCount(userTopicId);
 
-                if ((totalParticipationCount + 1) % 10 === 0) {
-                    if (analysisResult && analysisResult.includes('no aporta nada en la discusión')) {
-                        const systemMessage: Message = {
-                            id: (Date.now() + 1).toString(),
-                            message: `Análisis: ${analysisResult} - Participaciones generales: ${totalParticipationCount + 1}`,
-                            sender: 'Sistema',
-                            isWarning: true
-                        };
-                        socket.emit('sendMessage', systemMessage);
-                    }
+                if (analysisResult && (analysisResult.includes('no está aportando nada nuevo a la discusión') || analysisResult.includes('está fuera del contexto del debate'))) {
+                    const systemMessage: Message = {
+                        id: (Date.now() + 1).toString(),
+                        message: `${analysisResult}`,
+                        sender: 'Sistema',
+                        isWarning: true
+                    };
+                    socket.emit('sendMessage', systemMessage);
                 }
             } catch (error) {
                 console.error('Error saving user message:', error);
