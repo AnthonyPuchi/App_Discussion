@@ -213,47 +213,52 @@ const Chat: React.FC = () => {
 
     return (
         <div className="chat-container">
-            <div className="chat-header">
-                <h2>¡Comparte tus ideas y participa en la conversación de {decodeURIComponent(topicTitle as string)}!</h2>
-                <button onClick={handleParticipantsClick} className="participants-button">Participants</button>
+            <div className="users-list">
+                <h3 className="badge-title">Usuarios que no han participado</h3>
+                <div className="not-participated-users">
+                    {notParticipatedUsers
+                        .filter((user) => user.firstName !== 'Sistema')
+                        .map((user, index) => (
+                            <div key={index} className="not-participated-user">
+                                <Badge count={(index === 0 && totalParticipationCount % 10 === 0) ? 'participa' : 0} showZero={false}>
+                                    <Avatar shape="square" icon={<UserOutlined />} />
+                                </Badge>
+                                <div>{user.firstName} {user.lastName}</div>
+                            </div>
+                        ))}
+                </div>
             </div>
-            <div className="participation-count">
-                <p>Participaciones del usuario: {participationCount}</p>
-                <p>Participaciones totales: {totalParticipationCount}</p>
-            </div>
+            <div className="chat-content">
+                <div className="chat-header">
+                    <h2>¡Comparte tus ideas y participa en la conversación de {decodeURIComponent(topicTitle as string)}!</h2>
+                    <button onClick={handleParticipantsClick} className="participants-button">Participantes</button>
+                </div>
+                <div className="participation-count">
+                    <p>Participaciones del usuario: {participationCount}</p>
+                    <p>Participaciones totales: {totalParticipationCount}</p>
+                </div>
 
-            <div className="chat-messages">
-                {messages.map((message, index) => (
-                    <div key={index} className={`chat-message ${message.sender === formatName(user?.name || '') ? 'chat-message-sent' : 'chat-message-received'}`}>
-                        <div className="chat-message-sender">{message.sender}</div>
-                        <div className={`chat-message-content ${message.isWarning ? 'chat-message-warning' : ''}`}>
-                            {message.message}
-                        </div>
-                    </div>
-                ))}
-                <div ref={messagesEndRef} />
-            </div>
-            <div className="chat-input-container">
-                <textarea
-                    value={newMessageText}
-                    onChange={handleInputChange}
-                    onKeyDown={handleKeyDown}
-                    className="chat-input"
-                    placeholder="Type your message..."
-                />
-                <button onClick={sendMessage} className="chat-send-button">Send</button>
-            </div>
-            <div className="not-participated-users">
-                {notParticipatedUsers
-                    .filter((user) => user.firstName !== 'Sistema')
-                    .map((user, index) => (
-                        <div key={index} className="not-participated-user">
-                            <Badge count={(index === 0 && totalParticipationCount % 10 === 0) ? 'participa' : 0} showZero={false}>
-                                <Avatar shape="square" icon={<UserOutlined />} />
-                            </Badge>
-                            <div>{user.firstName} {user.lastName}</div>
+                <div className="chat-messages">
+                    {messages.map((message, index) => (
+                        <div key={index} className={`chat-message ${message.sender === formatName(user?.name || '') ? 'chat-message-sent' : 'chat-message-received'}`}>
+                            <div className="chat-message-sender">{message.sender}</div>
+                            <div className={`chat-message-content ${message.isWarning ? 'chat-message-warning' : ''}`}>
+                                {message.message}
+                            </div>
                         </div>
                     ))}
+                    <div ref={messagesEndRef} />
+                </div>
+                <div className="chat-input-container">
+                    <textarea
+                        value={newMessageText}
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
+                        className="chat-input"
+                        placeholder="Type your message..."
+                    />
+                    <button onClick={sendMessage} className="chat-send-button">Enviar</button>
+                </div>
             </div>
         </div>
     );
