@@ -1,3 +1,10 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    height: 100vh;
+}
+
 .chat-container {
     display: flex;
     height: 100vh;
@@ -11,6 +18,22 @@
     border-right: 1px solid #91d5ff;
     width: 25%;
     max-width: 25%;
+    scrollbar-width: thin;
+    scrollbar-color: #91d5ff rgba(240, 242, 245, 0.9);
+}
+
+.users-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.users-list::-webkit-scrollbar-track {
+    background: rgba(240, 242, 245, 0.9);
+}
+
+.users-list::-webkit-scrollbar-thumb {
+    background-color: #91d5ff;
+    border-radius: 10px;
+    border: 3px solid rgba(240, 242, 245, 0.9);
 }
 
 .badge-title {
@@ -33,6 +56,7 @@
     border-left: 1px solid #91d5ff;
     background-color: #ffffff;
     flex: 1;
+    position: relative;
 }
 
 .chat-header {
@@ -66,6 +90,22 @@
     border-radius: 10px;
     padding: 10px;
     background-color: #f0f2f5;
+    scrollbar-width: thin;
+    scrollbar-color: #91d5ff rgba(240, 242, 245, 0.9);
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: rgba(240, 242, 245, 0.9);
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background-color: #91d5ff;
+    border-radius: 10px;
+    border: 3px solid rgba(240, 242, 245, 0.9);
 }
 
 .chat-message {
@@ -123,6 +163,9 @@
     border: 1px solid #ccc;
     background-color: #f0f8ff;
     color: #1a1a1a;
+    resize: none;
+    left: 25%;
+    width: 75%;
 }
 
 .chat-send-button {
@@ -139,14 +182,20 @@
     background-color: #4754d6;
 }
 
+.not-participated-users {
+    display: flex;
+    flex-wrap: wrap;
+}
+
 .not-participated-user {
     display: flex;
     align-items: center;
-    margin-bottom: 15px;
+    margin: 10px;
     padding: 10px;
     background-color: rgba(255, 255, 255, 0.9);
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: calc(50% - 20px);
 }
 
 .not-participated-user div {

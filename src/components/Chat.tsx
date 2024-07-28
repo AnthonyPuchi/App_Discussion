@@ -29,7 +29,11 @@ const Chat: React.FC = () => {
     const [newMessageText, setNewMessageText] = useState<string>('');
     const [participationCount, setParticipationCount] = useState<number>(0);
     const [totalParticipationCount, setTotalParticipationCount] = useState<number>(0);
-    const [notParticipatedUsers, setNotParticipatedUsers] = useState<{ firstName: string; lastName: string }[]>([]);
+    const [notParticipatedUsers, setNotParticipatedUsers] = useState<{ firstName: string; lastName: string }[]>(() => {
+        const savedUsers = localStorage.getItem('notParticipatedUsers');
+        return savedUsers ? JSON.parse(savedUsers) : [];
+    });
+    const [highlightedUserIndex, setHighlightedUserIndex] = useState<number | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const formatName = (fullName: string): string => {
@@ -73,11 +77,18 @@ const Chat: React.FC = () => {
                     setMessages(updatedMessages);
                     setParticipationCount(userTopic.participationCount || 0);
                     setTotalParticipationCount(updatedMessages.length);
+
+                    if (updatedMessages.length % 5 === 0) {
+                        setHighlightedUserIndex(0);
+                    } else {
+                        setHighlightedUserIndex(null);
+                    }
                 } catch (error) {
                     console.error('Error loading messages:', error);
                     setMessages([]);
                     setParticipationCount(0);
                     setTotalParticipationCount(0);
+                    setHighlightedUserIndex(null);
                 }
             } catch (error) {
                 console.error('Error loading messages:', error);
@@ -93,6 +104,7 @@ const Chat: React.FC = () => {
                 if (topicId) {
                     const users = await fetchNotParticipatedUsers(topicId);
                     setNotParticipatedUsers(users);
+                    localStorage.setItem('notParticipatedUsers', JSON.stringify(users));
                 }
             } catch (error) {
                 console.error('Error fetching users who have not participated:', error);
@@ -118,10 +130,22 @@ const Chat: React.FC = () => {
             setTotalParticipationCount((prevCount) => prevCount + 1);
 
             setNotParticipatedUsers((prevUsers) => {
-                const updatedUsers = prevUsers.filter((user) => `${user.firstName} ${user.lastName}` !== newMessage.sender);
-                updatedUsers.push({ firstName: newMessage.sender.split(' ')[0], lastName: newMessage.sender.split(' ')[1] });
+                const updatedUsers = [...prevUsers];
+                if (updatedUsers.length > 0 && newMessage.sender === `${updatedUsers[0].firstName} ${updatedUsers[0].lastName}`) {
+                    const movedUser = updatedUsers.shift();
+                    if (movedUser) {
+                        updatedUsers.push(movedUser);
+                    }
+                }
+                localStorage.setItem('notParticipatedUsers', JSON.stringify(updatedUsers));
                 return updatedUsers;
             });
+
+            if ((messages.length + 1) % 5 === 0) {
+                setHighlightedUserIndex(0);
+            } else {
+                setHighlightedUserIndex(null);
+            }
         };
 
         socket.on('newMessage', handleMessage);
@@ -129,7 +153,7 @@ const Chat: React.FC = () => {
         return () => {
             socket.off('newMessage', handleMessage);
         };
-    }, []);
+    }, [messages]);
 
     const sendMessage = async () => {
         if (newMessageText.trim() === '') {
@@ -175,6 +199,19 @@ const Chat: React.FC = () => {
                     };
                     socket.emit('sendMessage', systemMessage);
                 }
+
+                if (highlightedUserIndex !== null) {
+                    setNotParticipatedUsers((prevUsers) => {
+                        const updatedUsers = [...prevUsers];
+                        const movedUser = updatedUsers.shift();
+                        if (movedUser) {
+                            updatedUsers.push(movedUser);
+                        }
+                        localStorage.setItem('notParticipatedUsers', JSON.stringify(updatedUsers));
+                        return updatedUsers;
+                    });
+                    setHighlightedUserIndex(null);
+                }
             } catch (error) {
                 console.error('Error saving user message:', error);
                 if (axios.isAxiosError(error) && error.response) {
@@ -214,13 +251,13 @@ const Chat: React.FC = () => {
     return (
         <div className="chat-container">
             <div className="users-list">
-                <h3 className="badge-title">Usuarios que no han participado</h3>
+                <h3 className="badge-title">Usuarios por participar</h3>
                 <div className="not-participated-users">
                     {notParticipatedUsers
                         .filter((user) => user.firstName !== 'Sistema')
                         .map((user, index) => (
                             <div key={index} className="not-participated-user">
-                                <Badge count={(index === 0 && totalParticipationCount % 10 === 0) ? 'participa' : 0} showZero={false}>
+                                <Badge count={index === highlightedUserIndex ? 'participa' : 0} showZero={false}>
                                     <Avatar shape="square" icon={<UserOutlined />} />
                                 </Badge>
                                 <div>{user.firstName} {user.lastName}</div>
@@ -230,7 +267,7 @@ const Chat: React.FC = () => {
             </div>
             <div className="chat-content">
                 <div className="chat-header">
-                    <h2>¡Comparte tus ideas y participa en la conversación de {decodeURIComponent(topicTitle as string)}!</h2>
+                    <h2>¡Comparte tus ideas en la conversación de {decodeURIComponent(topicTitle as string)}!</h2>
                     <button onClick={handleParticipantsClick} className="participants-button">Participantes</button>
                 </div>
                 <div className="participation-count">

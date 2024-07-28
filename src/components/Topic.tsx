@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Avatar, List } from 'antd';
+import { Row, Col } from 'antd';
 import { fetchTopics } from '../service/Service';
+import './Topic.css';
 
 interface Topic {
     id: string;
@@ -32,52 +33,22 @@ const Topic: React.FC = () => {
     };
 
     return (
-        <div style={{
-            padding: '20px',
-            backgroundColor: '#f0f2f5',
-            minHeight: '100vh',
-        }}>
-            <h2 style={{
-                marginBottom: '20px',
-                color: '#1890ff',
-                fontFamily: 'Arial, sans-serif',
-                textAlign: 'center',
-                fontSize: '28px',
-                fontWeight: 'bold',
-                backgroundColor: '#e6f7ff',
-                padding: '10px 20px',
-                borderRadius: '10px',
-                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                display: 'inline-block',
-                border: '2px solid #91d5ff'
-            }}>¡Aprende, comparte y participa en conversaciones significativas de {decodeURIComponent(roomTitle as string)}!</h2>
-            <List
-                itemLayout="horizontal"
-                dataSource={topics}
-                renderItem={(item) => (
-                    <List.Item
-                        key={item.id}
-                        onClick={() => handleClickTopic(item.id, item.title)}
-                        style={{
-                            cursor: 'pointer',
-                            marginBottom: '15px',
-                            backgroundColor: '#fff',
-                            borderRadius: '10px',
-                            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                            padding: '20px',
-                            transition: 'background-color 0.3s',
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e6f7ff')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fff')}
-                    >
-                        <List.Item.Meta
-                            avatar={<Avatar src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${item.id}`} />}
-                            title={<span style={{ color: '#1890ff', fontWeight: 'bold' }}>{item.title}</span>}
-                            description="Descripción de las discusiones del tema"
-                        />
-                    </List.Item>
-                )}
-            />
+        <div className="topic-page">
+            <h2 className="topic-title">
+                ¡Aprende, comparte y participa en conversaciones significativas de {decodeURIComponent(roomTitle as string)}!
+            </h2>
+            <Row gutter={[16, 16]}>
+                {topics.map((item) => (
+                    <Col key={item.id} xs={24} sm={12} md={6}>
+                        <div
+                            className="topic-card"
+                            onClick={() => handleClickTopic(item.id, item.title)}
+                        >
+                            <div className="topic-title">{item.title}</div>
+                        </div>
+                    </Col>
+                ))}
+            </Row>
         </div>
     );
 };
