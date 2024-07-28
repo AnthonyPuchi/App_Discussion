@@ -8,20 +8,26 @@ body {
     font-family: Arial, sans-serif;
 }
 
+.participants-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
 .participants-container {
     padding: 20px;
-    max-width: 600px;
-    margin: auto;
+    max-width: 1200px;
     background-color: rgba(240, 242, 245, 0.9);
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
 .participants-title {
     margin-bottom: 20px;
     color: #1890ff;
     font-family: 'Arial, sans-serif';
-    text-align: center;
     font-size: 28px;
     font-weight: bold;
     background-color: rgba(230, 247, 255, 0.8);
@@ -32,9 +38,31 @@ body {
     border: 2px solid #91d5ff;
 }
 
-.participants-list-item {
+.participants-list {
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #91d5ff rgba(240, 242, 245, 0.9);
+}
+
+.participants-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.participants-list::-webkit-scrollbar-track {
+    background: rgba(240, 242, 245, 0.9);
+}
+
+.participants-list::-webkit-scrollbar-thumb {
+    background-color: #91d5ff;
+    border-radius: 10px;
+    border: 3px solid rgba(240, 242, 245, 0.9);
+}
+
+.participant-card {
     padding: 10px;
-    margin-bottom: 10px;
+    text-align: center;
     background-color: rgba(255, 255, 255, 0.9);
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -42,6 +70,12 @@ body {
     cursor: pointer;
 }
 
-.participants-list-item:hover {
+.participant-card:hover {
     background-color: rgba(230, 230, 230, 0.9);
+}
+
+.participant-name {
+    margin-top: 10px;
+    font-weight: bold;
+    color: #1890ff;
 }

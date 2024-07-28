@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { List, Avatar } from 'antd';
+import { Row, Col, Avatar, Spin } from 'antd';
 import { useParams } from 'react-router-dom';
 import { fetchParticipantsByTopicId } from '../service/Service';
 import './Participants.css';
@@ -10,7 +10,6 @@ const Participants: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-
         const loadParticipants = async () => {
             try {
                 if (topicId) {
@@ -32,21 +31,26 @@ const Participants: React.FC = () => {
     }, [topicId]);
 
     return (
-        <div className="participants-container">
-            <h2 className="participants-title">Participantes</h2>
-            <List
-                loading={loading}
-                itemLayout="horizontal"
-                dataSource={participants}
-                renderItem={participant => (
-                    <List.Item className="participants-list-item">
-                        <List.Item.Meta
-                            avatar={<Avatar src={participant.picture} />}
-                            title={<span style={{ color: '#1890ff', fontWeight: 'bold' }}>{participant.name}</span>}
-                        />
-                    </List.Item>
+        <div className="participants-page">
+            <div className="participants-container">
+                <h2 className="participants-title">Participantes</h2>
+                {loading ? (
+                    <Spin size="large" />
+                ) : (
+                    <div className="participants-list">
+                        <Row gutter={[16, 16]}>
+                            {participants.map((participant, index) => (
+                                <Col key={index} xs={24} sm={12} md={6}>
+                                    <div className="participant-card">
+                                        <Avatar src={participant.picture} size={64} />
+                                        <div className="participant-name">{participant.name}</div>
+                                    </div>
+                                </Col>
+                            ))}
+                        </Row>
+                    </div>
                 )}
-            />
+            </div>
         </div>
     );
 };

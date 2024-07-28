@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Avatar, List } from 'antd';
+import { Row, Col } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { fetchRooms } from '../service/Service';
+import './Room.css';
 
 interface Room {
     id: string;
@@ -32,54 +33,22 @@ const Room: React.FC = () => {
     };
 
     return (
-        <div style={{
-            padding: '20px',
-            backgroundColor: '#f0f2f5',
-            minHeight: '100vh',
-        }}>
-            <h2 style={{
-                marginBottom: '10px',
-                color: '#1890ff',
-                fontFamily: 'Arial, sans-serif',
-                textAlign: 'center'
-            }}>Instituto Sudamericano</h2>
-            <h2 style={{
-                marginBottom: '20px',
-                color: '#1890ff',
-                fontFamily: 'Arial, sans-serif',
-                textAlign: 'center',
-                fontSize: '20px',
-                fontWeight: 'bold',
-                backgroundColor: '#e6f7ff',
-                padding: '10px 20px',
-                borderRadius: '10px',
-                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                display: 'inline-block',
-                border: '2px solid #91d5ff'
-            }}>Rooms: ¡Tu sala te espera!</h2>
-            <List
-                itemLayout="horizontal"
-                dataSource={roomsData}
-                renderItem={(item, index) => (
-                    <List.Item
-                        onClick={() => handleClickRoom(item.id, item.title)}
-                        style={{
-                            cursor: 'pointer',
-                            marginBottom: '15px',
-                            backgroundColor: '#fff',
-                            borderRadius: '10px',
-                            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                            padding: '20px',
-                        }}
-                    >
-                        <List.Item.Meta
-                            avatar={<Avatar src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${index}`} />}
-                            title={<a style={{ color: '#1890ff', fontWeight: 'bold' }}>{item.title}</a>}
-                            description={<span style={{ color: '#555' }}>{item.description}</span>}
-                        />
-                    </List.Item>
-                )}
-            />
+        <div className="room-page">
+            <h2 className="main-title">Instituto Tecnológico Sudamericano</h2>
+            <h2 className="sub-title">Rooms: ¡Tu sala te espera!</h2>
+            <Row gutter={[16, 16]}>
+                {roomsData.map((item) => (
+                    <Col key={item.id} xs={24} sm={12} md={6}>
+                        <div
+                            className="room-card"
+                            onClick={() => handleClickRoom(item.id, item.title)}
+                        >
+                            <div className="room-title">{item.title}</div>
+                            <div className="room-description">{item.description}</div>
+                        </div>
+                    </Col>
+                ))}
+            </Row>
         </div>
     );
 };

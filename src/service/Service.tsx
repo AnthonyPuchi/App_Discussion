@@ -34,7 +34,7 @@ export interface UserParticipation {
     status: boolean;
     createdAt: string;
     updatedAt: string;
-    participationCount: number; // Añadida esta línea
+    participationCount: number;
     sender: string;
 }
 
@@ -43,7 +43,7 @@ export interface SaveMessageResponse {
     analysisResult: string;
 }
 
-const API_URL = 'https://dbparticipationbe-production.up.railway.app';
+const API_URL = 'http://localhost:8080';
 
 export const fetchRooms = async (): Promise<Room[]> => {
     try {
@@ -165,7 +165,7 @@ export const fetchMessagesByTopicId = async (topicId: string): Promise<{
 export const fetchParticipantsByTopicId = async (topicId: string): Promise<{ firstName: string; lastName: string }[]> => {
     try {
         const response = await axios.get<{ firstName: string; lastName: string }[]>(`${API_URL}/participation/participants/${topicId}`);
-        console.log('API Response:', response.data); // Log para depurar
+        console.log('API Response:', response.data);
         return response.data;
     } catch (error) {
         console.error('Error fetching participants by topic ID:', error);
