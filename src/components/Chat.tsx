@@ -17,7 +17,7 @@ import io from 'socket.io-client';
 import './Chat.css';
 import axios from "axios";
 
-const socket = io('http://localhost:3001', {
+const socket = io('https://socketio-production-ee2e.up.railway.app', {
     withCredentials: true,
 });
 
