@@ -3,7 +3,7 @@ body {
     padding: 0;
     font-family: Arial, sans-serif;
     height: 100vh;
-    overflow: hidden; /* Para evitar que la página entera se desplace */
+    overflow: hidden;
 }
 
 .chat-container {
@@ -58,7 +58,7 @@ body {
     background-color: #ffffff;
     flex: 1;
     position: relative;
-    overflow-y: auto; /* Para permitir el scroll en el chat */
+    overflow-y: auto;
 }
 
 .chat-header {
@@ -227,7 +227,7 @@ body {
         padding: 10px;
         overflow-y: auto;
         flex-grow: 1;
-        max-height: calc(100vh - 150px); /* Ajuste para mantener el chat visible y con scroll independiente */
+        max-height: calc(100vh - 150px);
     }
 
     .chat-header {
@@ -240,7 +240,7 @@ body {
     }
 
     .badge-title {
-        display: none; /* Oculta el título "Usuarios por participar" en dispositivos móviles */
+        display: none;
     }
 
     .participation-count {
