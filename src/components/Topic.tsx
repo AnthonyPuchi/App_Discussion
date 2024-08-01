@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Row, Col } from 'antd';
 import { fetchTopics } from '../service/Service';
 import './Topic.css';
+import LogoutButton from './LogoutButton';
+import {ArrowLeftOutlined} from "@ant-design/icons"; // Importa el componente de cierre de sesión
 
 interface Topic {
     id: string;
@@ -32,10 +34,17 @@ const Topic: React.FC = () => {
         navigate(`/chat/${topicId}/${encodeURIComponent(topicTitle)}`);
     };
 
+    const handleGoBack = () => {
+        navigate(-1);  // Esto navegará a la pantalla anterior en el historial de navegación
+    };
+
     return (
         <div className="topic-page">
+            <ArrowLeftOutlined onClick={handleGoBack} className="back-button-icon" />
+            <LogoutButton className="logout-button"/>
+            <h2 className="main-title">Instituto Tecnológico Sudamericano</h2>
             <h2 className="topic-title">
-                ¡Aprende, comparte y participa en conversaciones significativas de {decodeURIComponent(roomTitle as string)}!
+                ¡Únete a las conversaciones de {decodeURIComponent(roomTitle as string)}!
             </h2>
             <Row gutter={[16, 16]}>
                 {topics.map((item) => (

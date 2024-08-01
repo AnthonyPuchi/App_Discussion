@@ -3,6 +3,7 @@ import { Row, Col } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { fetchRooms } from '../service/Service';
 import './Room.css';
+import LogoutButton from "./LogoutButton.tsx";
 
 interface Room {
     id: string;
@@ -34,6 +35,7 @@ const Room: React.FC = () => {
 
     return (
         <div className="room-page">
+            <LogoutButton className="logout-button" />
             <h2 className="main-title">Instituto Tecnológico Sudamericano</h2>
             <h2 className="sub-title">Rooms: ¡Tu sala te espera!</h2>
             <Row gutter={[16, 16]}>

@@ -10,6 +10,24 @@ body {
     display: flex;
     height: 100vh;
     background-color: #f0f2f5;
+    position: relative;
+}
+
+.back-button-icon {
+    font-size: 24px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    cursor: pointer;
+    color: black;
+    z-index: 10;
+}
+
+.logout-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
 }
 
 .users-list {
@@ -21,6 +39,7 @@ body {
     max-width: 25%;
     scrollbar-width: thin;
     scrollbar-color: #91d5ff rgba(240, 242, 245, 0.9);
+    padding-top: 40px;
 }
 
 .users-list::-webkit-scrollbar {
@@ -41,11 +60,11 @@ body {
     font-size: 1.5em;
     font-weight: bold;
     margin-bottom: 20px;
-    color: #1890ff;
+    color: #1a1a1a;
     text-align: center;
-    background-color: rgba(230, 247, 255, 0.9);
+    /*background-color: rgba(230, 247, 255, 0.9);
     border: 2px solid #91d5ff;
-    border-radius: 5px;
+    border-radius: 5px;*/
     padding: 10px;
 }
 
@@ -57,7 +76,6 @@ body {
     border-left: 1px solid #91d5ff;
     background-color: #ffffff;
     flex: 1;
-    position: relative;
     overflow-y: auto;
 }
 
@@ -66,10 +84,15 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
-    background-color: #3e4a61;
+   /* background-color: #3e4a61;*/
     padding: 10px;
     border-radius: 5px;
-    color: white;
+    color: #3e4a61;
+    position: relative;
+}
+
+.chat-header h2 {
+    font-weight: bold;
 }
 
 .participation-count {
@@ -192,10 +215,15 @@ body {
     align-items: center;
     margin: 10px;
     padding: 10px;
-    background-color: rgba(255, 255, 255, 0.9);
+    /*background-color: rgba(255, 255, 255, 0.9);
     border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);*/
     width: calc(50% - 20px);
+    text-align: center;
+}
+
+.user-avatar {
+    margin-bottom: 3px;
 }
 
 .not-participated-user div {
@@ -233,6 +261,7 @@ body {
     .chat-header {
         flex-direction: column;
         align-items: flex-start;
+        background-color: transparent;
     }
 
     .chat-header h2 {
@@ -253,15 +282,16 @@ body {
     }
 
     .chat-input {
-        width: calc(100% - 20px);
+        margin: 10px;
     }
 
     .chat-send-button {
-        width: 100%;
-        margin-top: 10px;
+        width: 95%;
     }
 
     .not-participated-user {
-        width: calc(100% - 20px);
+        display: flex;
+        flex-direction: row; /* Para que los elementos aparezcan en una fila */
+        overflow-x: auto;
     }
 }

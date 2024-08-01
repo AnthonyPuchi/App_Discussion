@@ -40,10 +40,10 @@ export interface UserParticipation {
 
 export interface SaveMessageResponse {
     userParticipation: UserParticipation;
-    analysisResult: string;
+    analysisFeedback?: string;
 }
 
-const API_URL = 'https://dbparticipationbe-production.up.railway.app';
+const API_URL = 'http://localhost:8080';
 
 export const fetchRooms = async (): Promise<Room[]> => {
     try {
@@ -86,14 +86,39 @@ export const fetchUserIdByEmail = async (email: string): Promise<string | null> 
 };
 
 export const saveUserMessage = async (userTopicId: string, message: string): Promise<SaveMessageResponse> => {
+    const payload = {
+        userTopicId,
+        message,
+        status: true,
+    };
+
     try {
-        const response = await axios.post<SaveMessageResponse>(`${API_URL}/user-participation`, {
-            userTopicId,
-            message,
-            status: true,
-        });
+        const response = await axios.post<SaveMessageResponse>(`${API_URL}/user-participation`, payload);
         return response.data;
     } catch (error) {
+        if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError;
+            if (axiosError.response) {
+                const responseData = axiosError.response.data as { message: string }; // Aserción de tipo
+                console.error('Error response data:', responseData);
+                const errorMessage = responseData.message;
+                if (errorMessage.includes('fuera del contexto del debate') || errorMessage.includes('no está aportando nada nuevo a la discusión')) {
+                    return {
+                        userParticipation: {
+                            id: '',
+                            userTopicId,
+                            message,
+                            status: true,
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                            participationCount: 0,
+                            sender: 'Sistema',
+                        },
+                        analysisFeedback: errorMessage,
+                    };
+                }
+            }
+        }
         console.error('Error saving user message:', error);
         throw error;
     }
@@ -165,7 +190,6 @@ export const fetchMessagesByTopicId = async (topicId: string): Promise<{
 export const fetchParticipantsByTopicId = async (topicId: string): Promise<{ firstName: string; lastName: string }[]> => {
     try {
         const response = await axios.get<{ firstName: string; lastName: string }[]>(`${API_URL}/participation/participants/${topicId}`);
-        console.log('API Response:', response.data);
         return response.data;
     } catch (error) {
         console.error('Error fetching participants by topic ID:', error);
