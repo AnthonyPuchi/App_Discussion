@@ -149,8 +149,15 @@ const Chat: React.FC = () => {
 
         socket.on('newMessage', handleMessage);
 
+        const handleSystemMessage = (systemMessage: Message) => {
+            setMessages((prevMessages) => [...prevMessages, systemMessage]);
+        };
+
+        socket.on('systemMessage', handleSystemMessage);
+
         return () => {
             socket.off('newMessage', handleMessage);
+            socket.off('systemMessage', handleSystemMessage);
         };
     }, [messages]);
 
@@ -196,7 +203,7 @@ const Chat: React.FC = () => {
                         sender: 'Sistema',
                         isWarning: true
                     };
-                    setMessages((prevMessages) => [...prevMessages, systemMessage]);
+                    socket.emit('systemMessage', systemMessage);
                 }
 
                 if (highlightedUserIndex !== null) {
