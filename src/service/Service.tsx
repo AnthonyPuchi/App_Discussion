@@ -11,6 +11,7 @@ interface Topic {
     id: string;
     title: string;
     roomId: string;
+    description: string;
 }
 
 interface User {
@@ -61,6 +62,16 @@ export const fetchTopics = async (): Promise<Topic[]> => {
         return response.data;
     } catch (error) {
         console.error('Error fetching topics:', error);
+        throw error;
+    }
+};
+
+export const fetchTopicById = async (topicId: string): Promise<Topic> => {
+    try {
+        const response = await axios.get<Topic>(`${API_URL}/topics/${topicId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching topic:', error);
         throw error;
     }
 };

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col } from 'antd';
+import { List, Avatar } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { fetchRooms } from '../service/Service';
 import './Room.css';
-import LogoutButton from "./LogoutButton.tsx";
+import LogoutButton from "./LogoutButton";
 
 interface Room {
     id: string;
@@ -38,19 +38,19 @@ const Room: React.FC = () => {
             <LogoutButton className="logout-button" />
             <h2 className="main-title">Instituto Tecnológico Sudamericano</h2>
             <h2 className="sub-title">Rooms: ¡Tu sala te espera!</h2>
-            <Row gutter={[16, 16]}>
-                {roomsData.map((item) => (
-                    <Col key={item.id} xs={24} sm={12} md={6}>
-                        <div
-                            className="room-card"
-                            onClick={() => handleClickRoom(item.id, item.title)}
-                        >
-                            <div className="room-title">{item.title}</div>
-                            <div className="room-description">{item.description}</div>
-                        </div>
-                    </Col>
-                ))}
-            </Row>
+            <List
+                itemLayout="horizontal"
+                dataSource={roomsData}
+                renderItem={(item, index) => (
+                    <List.Item onClick={() => handleClickRoom(item.id, item.title)}>
+                        <List.Item.Meta
+                            avatar={<Avatar src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${index}`} />}
+                            title={<a>{item.title}</a>}
+                            description={item.description}
+                        />
+                    </List.Item>
+                )}
+            />
         </div>
     );
 };

@@ -15,8 +15,8 @@ import {
 } from '../service/Service';
 import io from 'socket.io-client';
 import './Chat.css';
-import axios from "axios";
 import LogoutButton from './LogoutButton';
+import axios from "axios";
 
 const socket = io('http://localhost:3001', {
     withCredentials: true,
@@ -243,7 +243,7 @@ const Chat: React.FC = () => {
     };
 
     const handleGoBack = () => {
-        navigate(-1);  // Esto navegará a la pantalla anterior en el historial de navegación
+        navigate(-1);
     };
 
     return (
