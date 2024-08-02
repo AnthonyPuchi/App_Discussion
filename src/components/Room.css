@@ -29,23 +29,18 @@ body {
     color: #1890ff;
     font-family: 'Arial, sans-serif';
     text-align: center;
-    font-size: 28px;
+    font-size: 20px;
     font-weight: bold;
 }
 
 .sub-title {
     margin-bottom: 20px;
-    color: #1890ff;
+    color: #1a1a1a;
     font-family: 'Arial, sans-serif';
-    text-align: center;
     font-size: 20px;
     font-weight: bold;
-    background-color: #e6f7ff;
-    padding: 10px 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding-top: 10px;
     display: inline-block;
-    border: 2px solid #91d5ff;
 }
 
 .room-card {

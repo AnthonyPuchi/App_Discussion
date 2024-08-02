@@ -18,7 +18,7 @@ import './Chat.css';
 import LogoutButton from './LogoutButton';
 import axios from "axios";
 
-const socket = io('http://localhost:3001', {
+const socket = io('https://socketio-production-ee2e.up.railway.app', {
     withCredentials: true,
 });
 
@@ -129,11 +129,12 @@ const Chat: React.FC = () => {
 
             setNotParticipatedUsers((prevUsers) => {
                 const updatedUsers = [...prevUsers];
-                if (updatedUsers.length > 0 && newMessage.sender === `${updatedUsers[0].firstName} ${updatedUsers[0].lastName}`) {
-                    const movedUser = updatedUsers.shift();
-                    if (movedUser) {
-                        updatedUsers.push(movedUser);
-                    }
+                const matchedUserIndex = updatedUsers.findIndex(
+                    user => `${user.firstName} ${user.lastName}` === newMessage.sender
+                );
+                if (matchedUserIndex !== -1) {
+                    const movedUser = updatedUsers.splice(matchedUserIndex, 1)[0];
+                    updatedUsers.push(movedUser);
                 }
                 localStorage.setItem('notParticipatedUsers', JSON.stringify(updatedUsers));
                 return updatedUsers;
@@ -251,7 +252,7 @@ const Chat: React.FC = () => {
             <ArrowLeftOutlined onClick={handleGoBack} className="back-button-icon" />
             <LogoutButton className="logout-button" />
             <div className="users-list">
-                <h3 className="badge-title">Usuarios por participar</h3>
+                <h3 className="badge-title">Siguiente en participar</h3>
                 <div className="not-participated-users">
                     {notParticipatedUsers
                         .filter((user) => user.firstName !== 'Sistema')

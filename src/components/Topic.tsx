@@ -45,7 +45,7 @@ const Topic: React.FC = () => {
             <LogoutButton className="logout-button" />
             <h2 className="main-title">Instituto Tecnológico Sudamericano</h2>
             <h2 className="topic-title">
-                ¡Únete a las conversaciones de {decodeURIComponent(roomTitle as string)}!
+                Temas de la carrera de {decodeURIComponent(roomTitle as string)}
             </h2>
             <List
                 itemLayout="horizontal"

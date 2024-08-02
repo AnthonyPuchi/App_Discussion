@@ -2,22 +2,40 @@ import React, { useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Button } from 'antd';
 import 'antd/dist/reset.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import debateLogin from '../assets/debateLogin.jpg';
 
 const Login: React.FC = () => {
-    const { loginWithRedirect, isAuthenticated } = useAuth0();
+    const { loginWithRedirect, isAuthenticated, user, logout} = useAuth0();
     const navigate = useNavigate();
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const error = searchParams.get('error');
 
     const handleLogin = () => {
         loginWithRedirect();
     };
 
     useEffect(() => {
-        if (isAuthenticated) {
-            navigate('/room');
+        if (isAuthenticated && user) {
+            const allowedDomain = 'sudamericano.edu.ec';
+            const userEmail = user.email || '';
+            const userDomain = userEmail.split('@')[1];
+
+            if (userDomain !== allowedDomain) {
+                logout();
+                window.location.href = `${window.location.origin}/login?error=invalid_email`;
+            } else {
+                navigate('/room');
+            }
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, user, navigate, logout]);
+
+    useEffect(() => {
+        if (error === 'invalid_email') {
+            logout();
+        }
+    }, [error, logout]);
 
     return (
         <div style={{
@@ -43,6 +61,11 @@ const Login: React.FC = () => {
                 padding: '20px'
             }}>
                 <h2 style={{marginBottom: '20px', color: "#333", fontFamily: 'Arial, sans-serif', textAlign: "center"}}>¡Bienvenido al espacio donde tus ideas son escuchadas!</h2>
+                {error === 'invalid_email' && (
+                    <p style={{ color: 'red', marginBottom: '20px' }}>
+                        Acceso denegado. Debes usar un correo electrónico de sudamericano.edu.ec.
+                    </p>
+                )}
                 <Button
                     style={{
                         height: '40px',
@@ -59,7 +82,7 @@ const Login: React.FC = () => {
                     Iniciar Sesión
                 </Button>
                 <div style={{marginTop: '20px', textAlign: 'center'}}>
-                    <p style={{color: '#666', fontSize: '14px'}}>¡Unete a la conversación y Atrévete a desafiar tus pensamientos y defender tus argumentos!</p>
+                    <p style={{color: '#666', fontSize: '14px'}}>¡Únete a la conversación y atrévete a desafiar tus pensamientos y defender tus argumentos!</p>
                 </div>
             </div>
         </div>

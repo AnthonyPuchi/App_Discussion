@@ -27,17 +27,12 @@ body {
 
 .topic-title {
     margin-bottom: 20px;
-    color: #1890ff;
+    color: #1a1a1a;
     font-family: 'Arial, sans-serif';
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
-    background-color: rgba(230, 247, 255, 0.8);
-    padding: 10px 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding-top: 10px;
     display: inline-block;
-    border: 2px solid #91d5ff;
-    text-align: center;
 }
 
 .topic-card {
