@@ -137,10 +137,11 @@ const Chat: React.FC = () => {
                     updatedUsers.push(movedUser);
                 }
                 localStorage.setItem('notParticipatedUsers', JSON.stringify(updatedUsers));
+                socket.emit('updatedNotParticipatedUsers', updatedUsers); // Emit updated list
                 return updatedUsers;
             });
 
-            if ((messages.length + 1) % 5 === 0) {
+            if ((totalParticipationCount + 1) % 5 === 0) {
                 setHighlightedUserIndex(0);
             } else {
                 setHighlightedUserIndex(null);
@@ -153,13 +154,20 @@ const Chat: React.FC = () => {
             setMessages((prevMessages) => [...prevMessages, systemMessage]);
         };
 
+        const handleUpdatedNotParticipatedUsers = (updatedUsers: { firstName: string; lastName: string }[]) => {
+            setNotParticipatedUsers(updatedUsers);
+            localStorage.setItem('notParticipatedUsers', JSON.stringify(updatedUsers));
+        };
+
         socket.on('systemMessage', handleSystemMessage);
+        socket.on('updatedNotParticipatedUsers', handleUpdatedNotParticipatedUsers);
 
         return () => {
             socket.off('newMessage', handleMessage);
             socket.off('systemMessage', handleSystemMessage);
+            socket.off('updatedNotParticipatedUsers', handleUpdatedNotParticipatedUsers);
         };
-    }, [messages]);
+    }, [totalParticipationCount]);
 
     const sendMessage = async () => {
         if (newMessageText.trim() === '') {
@@ -206,16 +214,21 @@ const Chat: React.FC = () => {
                     socket.emit('systemMessage', systemMessage);
                 }
 
+                setNotParticipatedUsers((prevUsers) => {
+                    const updatedUsers = [...prevUsers];
+                    const matchedUserIndex = updatedUsers.findIndex(
+                        user => `${user.firstName} ${user.lastName}` === formattedName
+                    );
+                    if (matchedUserIndex !== -1) {
+                        const movedUser = updatedUsers.splice(matchedUserIndex, 1)[0];
+                        updatedUsers.push(movedUser);
+                        socket.emit('updatedNotParticipatedUsers', updatedUsers); // Emit updated list
+                    }
+                    localStorage.setItem('notParticipatedUsers', JSON.stringify(updatedUsers));
+                    return updatedUsers;
+                });
+
                 if (highlightedUserIndex !== null) {
-                    setNotParticipatedUsers((prevUsers) => {
-                        const updatedUsers = [...prevUsers];
-                        const movedUser = updatedUsers.shift();
-                        if (movedUser) {
-                            updatedUsers.push(movedUser);
-                        }
-                        localStorage.setItem('notParticipatedUsers', JSON.stringify(updatedUsers));
-                        return updatedUsers;
-                    });
                     setHighlightedUserIndex(null);
                 }
             } catch (error) {
@@ -223,10 +236,10 @@ const Chat: React.FC = () => {
                 if (axios.isAxiosError(error) && error.response) {
                     const errorMessage = error.response.data.message || 'Error inesperado';
                     const systemMessage: Message = { id: (Date.now() + 1).toString(), message: errorMessage, sender: 'Sistema', isWarning: true };
-                    setMessages((prevMessages) => [...prevMessages, systemMessage]);
+                    socket.emit('systemMessage', systemMessage);  // Emit system message
                 } else {
                     const systemMessage: Message = { id: (Date.now() + 1).toString(), message: 'Error: UserTopic not found', sender: 'Sistema', isWarning: true };
-                    setMessages((prevMessages) => [...prevMessages, systemMessage]);
+                    socket.emit('systemMessage', systemMessage);  // Emit system message
                 }
             }
         } catch (error) {
@@ -234,7 +247,7 @@ const Chat: React.FC = () => {
             if (axios.isAxiosError(error) && error.response) {
                 const errorMessage = error.response.data.message || 'Error inesperado';
                 const systemMessage: Message = { id: (Date.now() + 1).toString(), message: errorMessage, sender: 'Sistema', isWarning: true };
-                setMessages((prevMessages) => [...prevMessages, systemMessage]);
+                socket.emit('systemMessage', systemMessage);  // Emit system message
             }
         }
     };
