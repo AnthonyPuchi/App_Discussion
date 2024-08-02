@@ -9,21 +9,30 @@ body {
     padding: 20px;
     background-color: #f0f2f5;
     min-height: 100vh;
+    position: relative;
 }
+
+.logout-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: black;
+}
+
 
 .topic-title {
     margin-bottom: 20px;
-    color: #1890ff;
+    color: #1a1a1a;
     font-family: 'Arial, sans-serif';
-    font-size: 28px;
+    font-size: 20px;
     font-weight: bold;
-    background-color: rgba(230, 247, 255, 0.8);
-    padding: 10px 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding-top: 10px;
     display: inline-block;
-    border: 2px solid #91d5ff;
-    text-align: center;
 }
 
 .topic-card {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Avatar, Badge } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
+import { UserOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     fetchUserTopicByUserIdAndTopicId,
@@ -15,6 +15,7 @@ import {
 } from '../service/Service';
 import io from 'socket.io-client';
 import './Chat.css';
+import LogoutButton from './LogoutButton';
 import axios from "axios";
 
 const socket = io('https://socketio-production-ee2e.up.railway.app', {
@@ -53,7 +54,6 @@ const Chat: React.FC = () => {
 
                 const email = user.email;
                 if (!email) {
-                    console.error('User email is not available');
                     return;
                 }
 
@@ -65,9 +65,7 @@ const Chat: React.FC = () => {
 
                 try {
                     const userTopic = await fetchUserTopicByUserIdAndTopicId(userId, topicId);
-                    console.log('Se encontró el UserTopic:', userTopic);
                     const messagesForTopic = await fetchMessagesByTopicId(topicId);
-                    console.log('Mensajes obtenidos:', messagesForTopic);
 
                     const updatedMessages = messagesForTopic.map(message => ({
                         ...message,
@@ -131,11 +129,12 @@ const Chat: React.FC = () => {
 
             setNotParticipatedUsers((prevUsers) => {
                 const updatedUsers = [...prevUsers];
-                if (updatedUsers.length > 0 && newMessage.sender === `${updatedUsers[0].firstName} ${updatedUsers[0].lastName}`) {
-                    const movedUser = updatedUsers.shift();
-                    if (movedUser) {
-                        updatedUsers.push(movedUser);
-                    }
+                const matchedUserIndex = updatedUsers.findIndex(
+                    user => `${user.firstName} ${user.lastName}` === newMessage.sender
+                );
+                if (matchedUserIndex !== -1) {
+                    const movedUser = updatedUsers.splice(matchedUserIndex, 1)[0];
+                    updatedUsers.push(movedUser);
                 }
                 localStorage.setItem('notParticipatedUsers', JSON.stringify(updatedUsers));
                 return updatedUsers;
@@ -186,18 +185,18 @@ const Chat: React.FC = () => {
                 socket.emit('sendMessage', newMessage);
 
                 const response: SaveMessageResponse = await saveUserMessage(userTopicId, newMessageText);
-                const analysisResult = response.analysisResult;
+                const analysisFeedback = response.analysisFeedback;
 
                 await incrementUserParticipationCount(userTopicId);
 
-                if (analysisResult && (analysisResult.includes('no está aportando nada nuevo a la discusión') || analysisResult.includes('está fuera del contexto del debate'))) {
+                if (analysisFeedback && (analysisFeedback.includes('no está aportando nada nuevo a la discusión') || analysisFeedback.includes('está fuera del contexto del debate'))) {
                     const systemMessage: Message = {
                         id: (Date.now() + 1).toString(),
-                        message: `${analysisResult}`,
+                        message: analysisFeedback,
                         sender: 'Sistema',
                         isWarning: true
                     };
-                    socket.emit('sendMessage', systemMessage);
+                    setMessages((prevMessages) => [...prevMessages, systemMessage]);
                 }
 
                 if (highlightedUserIndex !== null) {
@@ -217,10 +216,10 @@ const Chat: React.FC = () => {
                 if (axios.isAxiosError(error) && error.response) {
                     const errorMessage = error.response.data.message || 'Error inesperado';
                     const systemMessage: Message = { id: (Date.now() + 1).toString(), message: errorMessage, sender: 'Sistema', isWarning: true };
-                    socket.emit('sendMessage', systemMessage);
+                    setMessages((prevMessages) => [...prevMessages, systemMessage]);
                 } else {
                     const systemMessage: Message = { id: (Date.now() + 1).toString(), message: 'Error: UserTopic not found', sender: 'Sistema', isWarning: true };
-                    socket.emit('sendMessage', systemMessage);
+                    setMessages((prevMessages) => [...prevMessages, systemMessage]);
                 }
             }
         } catch (error) {
@@ -228,7 +227,7 @@ const Chat: React.FC = () => {
             if (axios.isAxiosError(error) && error.response) {
                 const errorMessage = error.response.data.message || 'Error inesperado';
                 const systemMessage: Message = { id: (Date.now() + 1).toString(), message: errorMessage, sender: 'Sistema', isWarning: true };
-                socket.emit('sendMessage', systemMessage);
+                setMessages((prevMessages) => [...prevMessages, systemMessage]);
             }
         }
     };
@@ -244,34 +243,37 @@ const Chat: React.FC = () => {
         }
     };
 
-    const handleParticipantsClick = () => {
-        navigate(`/participants/${topicId}`);
+    const handleGoBack = () => {
+        navigate(-1);
     };
 
     return (
         <div className="chat-container">
+            <ArrowLeftOutlined onClick={handleGoBack} className="back-button-icon" />
+            <LogoutButton className="logout-button" />
             <div className="users-list">
-                <h3 className="badge-title">Usuarios por participar</h3>
+                <h3 className="badge-title">Siguiente en participar</h3>
                 <div className="not-participated-users">
                     {notParticipatedUsers
                         .filter((user) => user.firstName !== 'Sistema')
                         .map((user, index) => (
                             <div key={index} className="not-participated-user">
                                 <Badge count={index === highlightedUserIndex ? 'participa' : 0} showZero={false}>
-                                    <Avatar shape="square" icon={<UserOutlined />} />
+                                    <div className="user-avatar">
+                                        <Avatar shape="square" icon={<UserOutlined />} />
+                                    </div>
                                 </Badge>
-                                <div>{user.firstName} {user.lastName}</div>
+                                <div className="user-name">{user.firstName} {user.lastName}</div>
                             </div>
                         ))}
                 </div>
             </div>
             <div className="chat-content">
                 <div className="chat-header">
-                    <h2>¡Comparte tus ideas en la conversación de {decodeURIComponent(topicTitle as string)}!</h2>
-                    <button onClick={handleParticipantsClick} className="participants-button">Participantes</button>
+                    <h2 >¡Comparte tus ideas en la conversación de {decodeURIComponent(topicTitle as string)}!</h2>
                 </div>
                 <div className="participation-count">
-                    <p>Participaciones del usuario: {participationCount}</p>
+                    <p>Participaciones de {formatName(user?.name || '')}: {participationCount}</p>
                     <p>Participaciones totales: {totalParticipationCount}</p>
                 </div>
 
