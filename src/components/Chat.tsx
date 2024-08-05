@@ -74,9 +74,10 @@ const Chat: React.FC = () => {
 
                     setMessages(updatedMessages);
                     setParticipationCount(userTopic.participationCount || 0);
-                    setTotalParticipationCount(updatedMessages.length);
+                    const userMessagesCount = updatedMessages.filter(message => message.sender !== 'Sistema').length;
+                    setTotalParticipationCount(userMessagesCount);
 
-                    if (updatedMessages.length % 5 === 0) {
+                    if (userMessagesCount % 5 === 0) {
                         setHighlightedUserIndex(0);
                     } else {
                         setHighlightedUserIndex(null);
@@ -112,6 +113,19 @@ const Chat: React.FC = () => {
         fetchUsers();
     }, [topicId]);
 
+    useEffect(() => {
+        socket.emit('requestUserList');
+
+        socket.on('updateUserList', (users) => {
+            setNotParticipatedUsers(users);
+            localStorage.setItem('notParticipatedUsers', JSON.stringify(users));
+        });
+
+        return () => {
+            socket.off('updateUserList');
+        };
+    }, []);
+
     const scrollToBottom = () => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -125,21 +139,28 @@ const Chat: React.FC = () => {
     useEffect(() => {
         const handleMessage = (newMessage: Message) => {
             setMessages((prevMessages) => [...prevMessages, newMessage]);
-            setTotalParticipationCount((prevCount) => prevCount + 1);
+            if (newMessage.sender !== 'Sistema') {
+                setTotalParticipationCount((prevCount) => prevCount + 1);
+            }
 
-            setNotParticipatedUsers((prevUsers) => {
-                const updatedUsers = [...prevUsers];
-                if (updatedUsers.length > 0 && newMessage.sender === `${updatedUsers[0].firstName} ${updatedUsers[0].lastName}`) {
-                    const movedUser = updatedUsers.shift();
-                    if (movedUser) {
+            if (!newMessage.isWarning) {
+                setNotParticipatedUsers((prevUsers) => {
+                    const updatedUsers = [...prevUsers];
+                    const senderIndex = updatedUsers.findIndex(user => newMessage.sender === `${user.firstName} ${user.lastName}`);
+                    if (senderIndex > -1) {
+                        const [movedUser] = updatedUsers.splice(senderIndex, 1);
                         updatedUsers.push(movedUser);
+                    } else {
+                        updatedUsers.push({ firstName: newMessage.sender.split(' ')[0], lastName: newMessage.sender.split(' ')[1] });
                     }
-                }
-                localStorage.setItem('notParticipatedUsers', JSON.stringify(updatedUsers));
-                return updatedUsers;
-            });
+                    localStorage.setItem('notParticipatedUsers', JSON.stringify(updatedUsers));
+                    socket.emit('updateUserList', updatedUsers);
+                    return updatedUsers;
+                });
+            }
 
-            if ((messages.length + 1) % 5 === 0) {
+            const userMessagesCount = messages.filter(message => message.sender !== 'Sistema').length + 1;
+            if (userMessagesCount % 5 === 0) {
                 setHighlightedUserIndex(0);
             } else {
                 setHighlightedUserIndex(null);
@@ -188,7 +209,7 @@ const Chat: React.FC = () => {
 
                 await incrementUserParticipationCount(userTopicId);
 
-                if (analysisFeedback && (analysisFeedback.includes('no está aportando nada nuevo a la discusión') || analysisFeedback.includes('está fuera del contexto del debate'))) {
+                if (analysisFeedback && (analysisFeedback.includes('no está aportando nada nuevo a la discusión') || analysisFeedback.includes('está fuera del contexto del debate')||analysisFeedback.includes('ha repetido un mensaje anterior y no aporta información adicional.'))) {
                     const systemMessage: Message = {
                         id: (Date.now() + 1).toString(),
                         message: analysisFeedback,
@@ -198,18 +219,21 @@ const Chat: React.FC = () => {
                     socket.emit('sendMessage', systemMessage);  // Emitir el mensaje del sistema
                 }
 
-                if (highlightedUserIndex !== null) {
-                    setNotParticipatedUsers((prevUsers) => {
-                        const updatedUsers = [...prevUsers];
-                        const movedUser = updatedUsers.shift();
-                        if (movedUser) {
-                            updatedUsers.push(movedUser);
-                        }
-                        localStorage.setItem('notParticipatedUsers', JSON.stringify(updatedUsers));
-                        return updatedUsers;
-                    });
-                    setHighlightedUserIndex(null);
-                }
+                setNotParticipatedUsers((prevUsers) => {
+                    const updatedUsers = [...prevUsers];
+                    const senderIndex = updatedUsers.findIndex(user => formattedName === `${user.firstName} ${user.lastName}`);
+                    if (senderIndex > -1) {
+                        const [movedUser] = updatedUsers.splice(senderIndex, 1);
+                        updatedUsers.push(movedUser);
+                    } else {
+                        updatedUsers.push({ firstName: formattedName.split(' ')[0], lastName: formattedName.split(' ')[1] });
+                    }
+                    localStorage.setItem('notParticipatedUsers', JSON.stringify(updatedUsers));
+                    socket.emit('updateUserList', updatedUsers);
+                    return updatedUsers;
+                });
+
+                setHighlightedUserIndex(null);
             } catch (error) {
                 console.error('Error saving user message:', error);
                 if (axios.isAxiosError(error) && error.response) {
