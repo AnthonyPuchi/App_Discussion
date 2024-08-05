@@ -32,11 +32,11 @@ body {
 
 .users-list {
     background-color: rgba(240, 242, 245, 0.9);
-    padding: 10px;
+    padding: 20px;
     overflow-y: auto;
     border-right: 1px solid #91d5ff;
-    width: 100%;
-    max-width: 100%;
+    width: 25%;
+    max-width: 25%;
     scrollbar-width: thin;
     scrollbar-color: #91d5ff rgba(240, 242, 245, 0.9);
     padding-top: 40px;
@@ -62,6 +62,9 @@ body {
     margin-bottom: 20px;
     color: #3e4a61;
     text-align: center;
+    /*background-color: rgba(230, 247, 255, 0.9);
+    border: 2px solid #91d5ff;
+    border-radius: 5px;*/
     padding: 10px;
 }
 
@@ -69,7 +72,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 10px;
+    padding: 20px;
     border-left: 1px solid #91d5ff;
     background-color: #ffffff;
     flex: 1;
@@ -81,6 +84,7 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
+   /* background-color: #3e4a61;*/
     padding: 10px;
     border-radius: 5px;
     color: #3e4a61;
@@ -173,13 +177,11 @@ body {
 
 .chat-input-container {
     display: flex;
-    flex-direction: column;
     margin-top: 10px;
-    align-items: center;
 }
 
 .chat-input {
-    width: 95%;
+    flex-grow: 1;
     height: 60px;
     padding: 10px;
     border-radius: 10px;
@@ -187,11 +189,10 @@ body {
     background-color: #f0f8ff;
     color: #1a1a1a;
     resize: none;
-    margin-bottom: 10px;
 }
 
 .chat-send-button {
-    width: 95%;
+    margin-left: 10px;
     padding: 10px 20px;
     border: none;
     background-color: #646cff;
@@ -213,6 +214,10 @@ body {
     display: flex;
     align-items: center;
     margin: 10px;
+    padding: 10px;
+    /*background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);*/
     width: calc(50% - 20px);
     text-align: center;
 }
@@ -232,7 +237,6 @@ body {
     .chat-container {
         flex-direction: column;
         height: 100vh;
-        padding-top: 20px; /* Añadir padding superior */
     }
 
     .users-list {
@@ -251,7 +255,7 @@ body {
         padding: 10px;
         overflow-y: auto;
         flex-grow: 1;
-        max-height: calc(100vh - 170px); /* Ajustar para considerar el padding superior */
+        max-height: calc(100vh - 150px);
     }
 
     .chat-header {
