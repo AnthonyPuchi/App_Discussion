@@ -278,6 +278,7 @@ body {
     .participation-count {
         flex-direction: column;
         align-items: flex-start;
+        padding-top: 60px;
     }
 
     .chat-input-container {
