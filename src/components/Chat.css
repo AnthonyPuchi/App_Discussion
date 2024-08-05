@@ -256,12 +256,14 @@ body {
         overflow-y: auto;
         flex-grow: 1;
         max-height: calc(100vh - 150px);
+        padding-top: 60px; /* Ajuste para el espacio superior */
     }
 
     .chat-header {
         flex-direction: column;
         align-items: flex-start;
         background-color: transparent;
+        padding-top: 10px; /* Ajuste para el espacio superior */
     }
 
     .chat-header h2 {
@@ -275,6 +277,7 @@ body {
     .participation-count {
         flex-direction: column;
         align-items: flex-start;
+        padding-top: 10px; /* Ajuste para el espacio superior */
     }
 
     .chat-input-container {
@@ -294,4 +297,23 @@ body {
         flex-direction: row; /* Para que los elementos aparezcan en una fila */
         overflow-x: auto;
     }
+}
+
+.back-button-icon {
+    font-size: 24px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    cursor: pointer;
+    color: black;
+    z-index: 10;
+    margin-top: 10px; /* Ajuste para el espacio superior */
+}
+
+.logout-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    margin-top: 10px; /* Ajuste para el espacio superior */
 }
